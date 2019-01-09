@@ -6,7 +6,7 @@ Please be noticed - it **does not** implements LoRaWAN stack, it is pure LoRa - 
 ### Quickstart
 Copy / add as submodule files under `src` directory to your STM32 HAL project, then:
 1. Include header:
-```
+```cpp
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "lora_sx1276.h"
@@ -14,7 +14,7 @@ Copy / add as submodule files under `src` directory to your STM32 HAL project, t
 /* USER CODE END Includes */
 ```
 2. Add module initialization somewhere in `main()` function like that:
-```
+```cpp
   /* USER CODE BEGIN 2 */
   lora_sx1276 lora;
 
@@ -23,9 +23,9 @@ Copy / add as submodule files under `src` directory to your STM32 HAL project, t
   if (res != LORA_OK) {
     // Initialization failed
   }
-```
+```cpp
 3. Send packet:
-```
+```cpp
   // Send packet can be as simple as
   uint8_t res = lora_send_packet(&lora, (uint8_t *)"test", 4);
   if (res != LORA_OK) {
@@ -33,7 +33,7 @@ Copy / add as submodule files under `src` directory to your STM32 HAL project, t
   }
 ```
 4. Receive packet:
-```
+```cpp
   // Receive buffer
   uint8_t buffer[32];
   // Put LoRa modem into continuous receive mode
