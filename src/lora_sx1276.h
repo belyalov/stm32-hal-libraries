@@ -34,35 +34,34 @@
 
 // Signal bandwidth
 enum {
-    LORA_BANDWIDTH_7_8_KHZ = 0,
-    LORA_BANDWIDTH_10_4_KHZ,
-    LORA_BANDWIDTH_15_6_KHZ,
-    LORA_BANDWIDTH_20_8_KHZ,
-    LORA_BANDWIDTH_31_25_KHZ,
-    LORA_BANDWIDTH_41_7_KHZ,
-    LORA_BANDWIDTH_62_5_KHZ,
-    LORA_BANDWIDTH_125_KHZ,
-    LORA_BANDWIDTH_250_KHZ,
-    LORA_BANDWIDTH_500_KHZ,
-    LORA_BW_LAST,
+  LORA_BANDWIDTH_7_8_KHZ = 0,
+  LORA_BANDWIDTH_10_4_KHZ,
+  LORA_BANDWIDTH_15_6_KHZ,
+  LORA_BANDWIDTH_20_8_KHZ,
+  LORA_BANDWIDTH_31_25_KHZ,
+  LORA_BANDWIDTH_41_7_KHZ,
+  LORA_BANDWIDTH_62_5_KHZ,
+  LORA_BANDWIDTH_125_KHZ,
+  LORA_BANDWIDTH_250_KHZ,
+  LORA_BANDWIDTH_500_KHZ,
+  LORA_BW_LAST,
 };
 
 // LORA definition
 typedef struct {
-    // SPI parameters
-    SPI_HandleTypeDef  *spi;
-    GPIO_TypeDef       *nss_port;
-    uint16_t            nss_pin;
-    uint32_t            spi_timeout;
-    // Operating frequency, in Hz
-    uint32_t            frequency;
-    // Output PIN (module internal, not related to your design)
-    // Can be one of PA_OUTPUT_PA_BOOST / PA_OUTPUT_RFO
-    uint32_t            pa_mode;
-
-    // Base FIFO addresses for RX/TX
-    uint8_t             tx_base_addr;
-    uint8_t             rx_base_addr;
+  // SPI parameters
+  SPI_HandleTypeDef  *spi;
+  GPIO_TypeDef       *nss_port;
+  uint16_t            nss_pin;
+  uint32_t            spi_timeout;
+  // Operating frequency, in Hz
+  uint32_t            frequency;
+  // Output PIN (module internal, not related to your design)
+  // Can be one of PA_OUTPUT_PA_BOOST / PA_OUTPUT_RFO
+  uint32_t            pa_mode;
+  // Base FIFO addresses for RX/TX
+  uint8_t             tx_base_addr;
+  uint8_t             rx_base_addr;
 } lora_sx1276;
 
 
@@ -79,7 +78,7 @@ typedef struct {
 //  - `LORA_OK` - modem initialized successfully
 //  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
 uint8_t  lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-                  uint16_t nss_pin, uint64_t freq);
+                   uint16_t nss_pin, uint64_t freq);
 
 // Returns LoRa modem version number (usually 0x12)
 uint8_t  lora_version(lora_sx1276 *lora);
@@ -238,7 +237,7 @@ uint8_t  lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_
 //  - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable
 //    this functionality explicitly, it is disabled by default.
 uint8_t  lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
-                                     uint32_t timeout, uint8_t *error);
+                                      uint32_t timeout, uint8_t *error);
 
 // Sets timeout for `lora_mode_receive_single()` in symbols.
 // Params:
