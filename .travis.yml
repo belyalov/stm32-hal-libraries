@@ -1,0 +1,13 @@
+sudo: required
+
+language:
+  - cpp
+
+install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi gcc make
+
+script:
+  - mkdir build_arm
+  - mkdir build_cross
+  - make
