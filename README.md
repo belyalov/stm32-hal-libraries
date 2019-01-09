@@ -1,7 +1,16 @@
-# Tiny LoRa for STM32 HAL
+# Tiny LoRa library for STM32 HAL
 Simple and lightweight library to work with LoRa `sx1276` compatible modules on STM32 HAL.
-Please be noticed - it **does not** implements LoRaWAN stack, it is pure LoRa - basically RADIO only.
 
+It is really **tiny**, check this out:
+```bash
+$ arm-none-eabi-gcc -c -mcpu=cortex-m0plus -mthumb <other options stripped> lora_sx1276.c
+$ size lora_sx1276.o
+   text    data     bss     dec     hex filename
+   1596       0       0    1596     63c lora_sx1276.o
+   ```
+It's just `1.5`Kb of compiled code! :)
+
+Please be noticed - it **does not** implements LoRaWAN stack, it is pure LoRa - basically RADIO only.
 
 ## Quickstart
 Copy / add as submodule files under `src` directory to your STM32 HAL project, then:
