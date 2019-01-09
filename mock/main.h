@@ -1,3 +1,5 @@
+// Copyright (c) Konstantin Belyalov. All rights reserved.
+// Licensed under the MIT license.
 #ifndef __MAIN_H
 #define __MAIN_H
 

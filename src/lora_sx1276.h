@@ -11,6 +11,16 @@
 #define LORA_BASE_FREQUENCY_US             (915LLU*MHZ)
 #define LORA_BASE_FREQUENCY_EU             (868LLU*MHZ)
 
+// Default settings
+#define LORA_DEFAULT_TX_POWER              17
+#define LORA_DEFAULT_SF                    7
+#define LORA_DEFAULT_PREAMBLE_LEN          10
+#define LORA_DEFAULT_RX_ADDR               0
+#define LORA_DEFAULT_TX_ADDR               0
+#define LORA_DEFAULT_SPI_TIMEOUT           1000 // ms
+
+#define LORA_COMPATIBLE_VERSION            0x12U
+
 // LORA return codes
 #define LORA_OK                            0
 #define LORA_CRC_ERROR                     1
@@ -19,8 +29,6 @@
 #define LORA_ERROR                         4
 #define LORA_BUSY                          5
 #define LORA_EMPTY                         6
-
-#define LORA_DEFAULT_TX_POWER              17
 
 // TX power mode select
 #define LORA_PA_OUTPUT_RFO                 0

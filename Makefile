@@ -1,3 +1,6 @@
+# Copyright (c) Konstantin Belyalov. All rights reserved.
+# Licensed under the MIT license.
+#
 # This makefile is intended to be run only for CI purposes, do not use it to compile firmware!
 
 BUILD_DIR_ARM = build_arm

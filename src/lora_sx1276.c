@@ -71,13 +71,13 @@
 #define BIT_7                       (1 << 7)
 
 // Debugging support
-// To enable add
+// To enable debug information add
 // #define LORA_DEBUG
 // to main.h
 #ifdef LORA_DEBUG
-#define DEBUG(msg, ...)     printf(const char *fmt, ##__VA_ARGS__);
+#define DEBUGF(msg, ...)     printf(const char *fmt, ##__VA_ARGS__);
 #else
-#define DEBUG(msg, ...)
+#define DEBUGF(msg, ...)
 #endif
 
 // SPI helpers //
@@ -99,7 +99,7 @@ static uint8_t read_register(lora_sx1276 *lora, uint8_t address)
   HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
 
   if (res1 != HAL_OK || res2 != HAL_OK) {
-    DEBUG("SPI transmit/receive failed (%d %d)", res1, res2);
+    DEBUGF("SPI transmit/receive failed (%d %d)", res1, res2);
   }
 
   return value;
@@ -121,7 +121,7 @@ static void write_register(lora_sx1276 *lora, uint8_t address, uint8_t value)
   HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
 
   if (res != HAL_OK) {
-    DEBUG("SPI transmit failed: %d", res);
+    DEBUGF("SPI transmit failed: %d", res);
   }
 }
 
@@ -138,7 +138,7 @@ static void write_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len)
   HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
 
   if (res1 != HAL_OK || res2 != HAL_OK) {
-    DEBUG("SPI transmit failed");
+    DEBUGF("SPI transmit failed");
   }
 }
 
@@ -155,7 +155,7 @@ static void read_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len)
   HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
 
   if (res1 != HAL_OK || res2 != HAL_OK) {
-    DEBUG("SPI receive/transmit failed");
+    DEBUGF("SPI receive/transmit failed");
   }
 }
 
@@ -523,20 +523,20 @@ uint8_t lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_l
   write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_RX_ALL);
 
   if (state & IRQ_FLAGS_RX_TIMEOUT) {
-    DEBUG("timeout");
+    DEBUGF("timeout");
     res = LORA_TIMEOUT;
     goto done;
   }
 
   if (state & IRQ_FLAGS_RX_DONE) {
     if (!(state & IRQ_FLAGS_VALID_HEADER)) {
-      DEBUG("invalid header");
+      DEBUGF("invalid header");
       res = LORA_INVALID_HEADER;
       goto done;
     }
     // Packet has been received
     if (state & IRQ_FLAGS_PAYLOAD_CRC_ERROR) {
-      DEBUG("CRC error");
+      DEBUGF("CRC error");
       res = LORA_CRC_ERROR;
       goto done;
     }
@@ -555,7 +555,7 @@ uint8_t lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_l
     write_register(lora, REG_FIFO_ADDR_PTR, offset);
     // Read payload
     read_fifo(lora, buffer, len);
-    DEBUG("got packet len %d", len);
+    DEBUGF("got packet len %d", len);
     res = LORA_OK;
   }
 
@@ -597,14 +597,14 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
   lora->nss_pin = nss_pin;
   lora->frequency = freq;
   lora->pa_mode = LORA_PA_OUTPUT_PA_BOOST;
-  lora->tx_base_addr = 0;
-  lora->rx_base_addr = 0;
-  lora->spi_timeout = 1000;
+  lora->tx_base_addr = LORA_DEFAULT_TX_ADDR;
+  lora->rx_base_addr = LORA_DEFAULT_RX_ADDR;
+  lora->spi_timeout = LORA_DEFAULT_SPI_TIMEOUT;
 
   // Check version
   uint8_t ver = lora_version(lora);
-  if (ver != 0x12) {
-    DEBUG("Got wrong radio version 0x%x, expected 0x12", ver);
+  if (ver != LORA_COMPATIBLE_VERSION) {
+    DEBUGF("Got wrong radio version 0x%x, expected 0x12", ver);
     return LORA_ERROR;
   }
 
@@ -614,8 +614,8 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
 
   // Set frequency
   lora_set_frequency(lora, freq);
-  lora_set_spreading_factor(lora, 7);
-  lora_set_preamble_length(lora, 10);
+  lora_set_spreading_factor(lora, LORA_DEFAULT_SF);
+  lora_set_preamble_length(lora, LORA_DEFAULT_PREAMBLE_LEN);
   // By default - explicit header mode
   lora_set_explicit_header_mode(lora);
   // Set LNA boost
