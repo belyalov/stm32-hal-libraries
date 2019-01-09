@@ -1,7 +1,7 @@
 // Copyright (c) Konstantin Belyalov. All rights reserved.
 // Licensed under the MIT license.
 
-#include "lora.h"
+#include "lora_sx1276.h"
 
 // sx1276 registers
 #define REG_FIFO                 0x00
@@ -191,8 +191,11 @@ static void set_low_data_rate_optimization(lora_def *lora)
 {
     assert_param(lora);
 
-    uint64_t bandwidth = lora_get_signal_bandwidth(lora);
-    uint8_t  sf = lora_get_spreading_factor(lora);
+    // Read current signal bandwidth
+    uint64_t bandwidth = read_register(lora, REG_MODEM_CONFIG_1) >> 4;
+    // Read current spreading factor
+    uint8_t  sf = read_register(lora, REG_MODEM_CONFIG_2) >> 4;
+
     uint8_t  mc3 = MC3_AGCAUTO;
 
     if (sf >= 11 && bandwidth == LORA_BANDWIDTH_125_KHZ) {
@@ -335,20 +338,6 @@ uint8_t lora_packet_snr(lora_def *lora)
     uint8_t snr = read_register(lora, REG_PKT_SNR_VALUE);
 
     return snr / 5;
-}
-
-uint8_t lora_get_spreading_factor(lora_def *lora)
-{
-    assert_param(lora);
-
-    return read_register(lora, REG_MODEM_CONFIG_2) >> 4;
-}
-
-uint64_t lora_get_signal_bandwidth(lora_def *lora)
-{
-    assert_param(lora);
-
-    return read_register(lora, REG_MODEM_CONFIG_1) >> 4;
 }
 
 void lora_set_signal_bandwidth(lora_def *lora, uint64_t bw)
@@ -602,7 +591,7 @@ uint8_t lora_init(lora_def *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port
 {
     assert_param(lora && spi);
 
-    // Init params
+    // Init params with default values
     lora->spi = spi;
     lora->nss_port = nss_port;
     lora->nss_pin = nss_pin;
