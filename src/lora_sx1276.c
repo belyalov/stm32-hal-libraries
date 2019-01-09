@@ -83,7 +83,7 @@
 // SPI helpers //
 
 // Reads single register
-static uint8_t read_register(lora_def *lora, uint8_t address)
+static uint8_t read_register(lora_sx1276 *lora, uint8_t address)
 {
     uint8_t value = 0;
 
@@ -106,7 +106,7 @@ static uint8_t read_register(lora_def *lora, uint8_t address)
 }
 
 // Writes single register
-static void write_register(lora_def *lora, uint8_t address, uint8_t value)
+static void write_register(lora_sx1276 *lora, uint8_t address, uint8_t value)
 {
     // 7bit controls read/write mode
     SET_BIT(address, BIT_7);
@@ -126,7 +126,7 @@ static void write_register(lora_def *lora, uint8_t address, uint8_t value)
 }
 
 // Copies bytes from buffer into radio FIFO given len length
-static void write_fifo(lora_def *lora, uint8_t *buffer, uint8_t len)
+static void write_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len)
 {
     uint8_t address = REG_FIFO | BIT_7;
 
@@ -143,7 +143,7 @@ static void write_fifo(lora_def *lora, uint8_t *buffer, uint8_t len)
 }
 
 // Reads data "len" size from FIFO into buffer
-static void read_fifo(lora_def *lora, uint8_t *buffer, uint8_t len)
+static void read_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len)
 {
     uint8_t address = REG_FIFO;
 
@@ -159,13 +159,13 @@ static void read_fifo(lora_def *lora, uint8_t *buffer, uint8_t len)
     }
 }
 
-static void set_mode(lora_def *lora, uint8_t mode)
+static void set_mode(lora_sx1276 *lora, uint8_t mode)
 {
     write_register(lora, REG_OP_MODE, OPMODE_LONG_RANGE_MODE | mode);
 }
 
 // Set Overload Current Protection
-static void set_OCP(lora_def *lora, uint8_t imax)
+static void set_OCP(lora_sx1276 *lora, uint8_t imax)
 {
     uint8_t value;
 
@@ -187,7 +187,7 @@ static void set_OCP(lora_def *lora, uint8_t imax)
     write_register(lora, REG_OCP, OCP_ON | value);
 }
 
-static void set_low_data_rate_optimization(lora_def *lora)
+static void set_low_data_rate_optimization(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -205,14 +205,14 @@ static void set_low_data_rate_optimization(lora_def *lora)
     write_register(lora, REG_MODEM_CONFIG_3, mc3);
 }
 
-void lora_mode_sleep(lora_def *lora)
+void lora_mode_sleep(lora_sx1276 *lora)
 {
     assert_param(lora);
 
     set_mode(lora, OPMODE_SLEEP);
 }
 
-void lora_mode_receive_continious(lora_def *lora)
+void lora_mode_receive_continious(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -224,7 +224,7 @@ void lora_mode_receive_continious(lora_def *lora)
     set_mode(lora, OPMODE_RX_CONTINUOUS);
 }
 
-void lora_mode_receive_single(lora_def *lora)
+void lora_mode_receive_single(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -236,14 +236,14 @@ void lora_mode_receive_single(lora_def *lora)
     set_mode(lora, OPMODE_RX_SINGLE);
 }
 
-void lora_mode_standby(lora_def *lora)
+void lora_mode_standby(lora_sx1276 *lora)
 {
     assert_param(lora);
 
     set_mode(lora, OPMODE_STDBY);
 }
 
-void lora_set_implicit_header_mode(lora_def *lora)
+void lora_set_implicit_header_mode(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -252,7 +252,7 @@ void lora_set_implicit_header_mode(lora_def *lora)
     write_register(lora, REG_MODEM_CONFIG_1, mc1);
 }
 
-void lora_set_explicit_header_mode(lora_def *lora)
+void lora_set_explicit_header_mode(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -261,7 +261,7 @@ void lora_set_explicit_header_mode(lora_def *lora)
     write_register(lora, REG_MODEM_CONFIG_1, mc1);
 }
 
-void lora_set_tx_power(lora_def *lora, uint8_t level)
+void lora_set_tx_power(lora_sx1276 *lora, uint8_t level)
 {
     assert_param(lora);
 
@@ -310,7 +310,7 @@ void lora_set_tx_power(lora_def *lora, uint8_t level)
     }
 }
 
-void lora_set_frequency(lora_def *lora, uint64_t freq)
+void lora_set_frequency(lora_sx1276 *lora, uint64_t freq)
 {
     assert_param(lora);
 
@@ -322,7 +322,7 @@ void lora_set_frequency(lora_def *lora, uint64_t freq)
     write_register(lora, REG_FRF_LSB, frf & 0xff);
 }
 
-uint8_t lora_packet_rssi(lora_def *lora)
+uint8_t lora_packet_rssi(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -331,7 +331,7 @@ uint8_t lora_packet_rssi(lora_def *lora)
     return lora->frequency < (868 * MHZ) ? rssi - 164 : rssi - 157;
 }
 
-uint8_t lora_packet_snr(lora_def *lora)
+uint8_t lora_packet_snr(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -340,7 +340,7 @@ uint8_t lora_packet_snr(lora_def *lora)
     return snr / 5;
 }
 
-void lora_set_signal_bandwidth(lora_def *lora, uint64_t bw)
+void lora_set_signal_bandwidth(lora_sx1276 *lora, uint64_t bw)
 {
     assert_param(lora && bw < LORA_BW_LAST);
 
@@ -354,7 +354,7 @@ void lora_set_signal_bandwidth(lora_def *lora, uint64_t bw)
     set_low_data_rate_optimization(lora);
 }
 
-void lora_set_spreading_factor(lora_def *lora, uint8_t sf)
+void lora_set_spreading_factor(lora_sx1276 *lora, uint8_t sf)
 {
     assert_param(lora && sf <= 12 && sf >=6);
 
@@ -380,7 +380,7 @@ void lora_set_spreading_factor(lora_def *lora, uint8_t sf)
     set_low_data_rate_optimization(lora);
 }
 
-void lora_set_crc(lora_def *lora, uint8_t enable)
+void lora_set_crc(lora_sx1276 *lora, uint8_t enable)
 {
     assert_param(lora);
 
@@ -395,7 +395,7 @@ void lora_set_crc(lora_def *lora, uint8_t enable)
     write_register(lora, REG_MODEM_CONFIG_2, mc2);
 }
 
-void lora_set_coding_rate(lora_def *lora, uint8_t rate)
+void lora_set_coding_rate(lora_sx1276 *lora, uint8_t rate)
 {
     assert_param(lora);
 
@@ -406,7 +406,7 @@ void lora_set_coding_rate(lora_def *lora, uint8_t rate)
     write_register(lora, REG_MODEM_CONFIG_1, mc1);
 }
 
-void lora_set_preamble_length(lora_def *lora, uint16_t len)
+void lora_set_preamble_length(lora_sx1276 *lora, uint16_t len)
 {
     assert_param(lora);
 
@@ -414,14 +414,14 @@ void lora_set_preamble_length(lora_def *lora, uint16_t len)
     write_register(lora, REG_PREAMBLE_LSB, len & 0xf);
 }
 
-uint8_t lora_version(lora_def *lora)
+uint8_t lora_version(lora_sx1276 *lora)
 {
     assert_param(lora);
 
     return read_register(lora, REG_VERSION);
 }
 
-uint8_t lora_is_transmitting(lora_def *lora)
+uint8_t lora_is_transmitting(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -430,7 +430,7 @@ uint8_t lora_is_transmitting(lora_def *lora)
     return opmode & (1 << OPMODE_TX) ? LORA_BUSY : LORA_OK;
 }
 
-uint8_t lora_send_packet(lora_def *lora, uint8_t *data, uint8_t data_len)
+uint8_t lora_send_packet(lora_sx1276 *lora, uint8_t *data, uint8_t data_len)
 {
     assert_param(lora && data && data_len > 0);
 
@@ -457,7 +457,7 @@ uint8_t lora_send_packet(lora_def *lora, uint8_t *data, uint8_t data_len)
     return LORA_OK;
 }
 
-uint8_t lora_send_packet_blocking(lora_def *lora, uint8_t *data, uint8_t data_len, uint32_t timeout)
+uint8_t lora_send_packet_blocking(lora_sx1276 *lora, uint8_t *data, uint8_t data_len, uint32_t timeout)
 {
     assert_param(lora && data && data_len > 0 && timeout > 0);
 
@@ -481,7 +481,7 @@ uint8_t lora_send_packet_blocking(lora_def *lora, uint8_t *data, uint8_t data_le
     return LORA_TIMEOUT;
 }
 
-void lora_set_rx_symbol_timeout(lora_def *lora, uint16_t symbols)
+void lora_set_rx_symbol_timeout(lora_sx1276 *lora, uint16_t symbols)
 {
     assert_param(lora && symbols <= 1024 && symbols >= 4);
 
@@ -501,7 +501,7 @@ void lora_set_rx_symbol_timeout(lora_def *lora, uint16_t symbols)
     }
 }
 
-uint8_t lora_is_packet_available(lora_def *lora)
+uint8_t lora_is_packet_available(lora_sx1276 *lora)
 {
     assert_param(lora);
 
@@ -511,7 +511,7 @@ uint8_t lora_is_packet_available(lora_def *lora)
     return  irqs & (IRQ_FLAGS_RX_DONE | IRQ_FLAGS_RX_TIMEOUT);
 }
 
-uint8_t lora_receive_packet(lora_def *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error)
+uint8_t lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error)
 {
     assert_param(lora && buffer && buffer_len > 0);
 
@@ -567,7 +567,7 @@ done:
     return len;
 }
 
-uint8_t lora_receive_packet_blocking(lora_def *lora, uint8_t *buffer, uint8_t buffer_len,
+uint8_t lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
                                      uint32_t timeout, uint8_t *error)
 {
     assert_param(lora && buffer && buffer_len > 0);
@@ -586,7 +586,7 @@ uint8_t lora_receive_packet_blocking(lora_def *lora, uint8_t *buffer, uint8_t bu
     return lora_receive_packet(lora, buffer, buffer_len, error);
 }
 
-uint8_t lora_init(lora_def *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
+uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
         uint16_t nss_pin, uint64_t freq)
 {
     assert_param(lora && spi);

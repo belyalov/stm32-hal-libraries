@@ -63,7 +63,7 @@ typedef struct {
     // Base FIFO addresses for RX/TX
     uint8_t             tx_base_addr;
     uint8_t             rx_base_addr;
-} lora_def;
+} lora_sx1276;
 
 
 // LORA Module setup //
@@ -78,11 +78,11 @@ typedef struct {
 // Returns:
 //  - `LORA_OK` - modem initialized successfully
 //  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
-uint8_t  lora_init(lora_def *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
+uint8_t  lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
                   uint16_t nss_pin, uint64_t freq);
 
 // Returns LoRa modem version number (usually 0x12)
-uint8_t  lora_version(lora_def *lora);
+uint8_t  lora_version(lora_sx1276 *lora);
 
 
 // LORA mode selection //
@@ -90,22 +90,22 @@ uint8_t  lora_version(lora_def *lora);
 // Put radio into SLEEP mode:
 // In this mode only SPI and configuration registers are accessible.
 // LoRa FIFO is not accessible.
-void     lora_mode_sleep(lora_def *lora);
+void     lora_mode_sleep(lora_sx1276 *lora);
 
 // Put radio into standby (idle) mode:
 // Both Crystal Oscillator and LoRa baseband blocks are turned on.
 // RF part and PLLs are disabled.
-void     lora_mode_standby(lora_def *lora);
+void     lora_mode_standby(lora_sx1276 *lora);
 
 // Put radio into continuous receive mode:
 // When activated the RFM95/96/97/98(W) powers all remaining blocks required for reception,
 // processing all received data until a new user request is made to change operating mode.
-void     lora_mode_receive_continious(lora_def *lora);
+void     lora_mode_receive_continious(lora_sx1276 *lora);
 
 // Put radio into single receive mode:
 // When activated the RFM95/96/97/98(W) powers all remaining blocks required for reception, remains in
 // this state until a valid packet has been received and then returns to Standby mode.
-void     lora_mode_receive_single(lora_def *lora);
+void     lora_mode_receive_single(lora_sx1276 *lora);
 
 
 // LORA signal / transmission parameters //
@@ -113,64 +113,64 @@ void     lora_mode_receive_single(lora_def *lora);
 // Sets LoRa transmit power.
 // Params:
 //  - `level` - TX power in dBm. Valid range from 2dBm to 20dBm
-void     lora_set_tx_power(lora_def *lora, uint8_t level);
+void     lora_set_tx_power(lora_sx1276 *lora, uint8_t level);
 
 // Set operational frequency.
 // Params:
 //  - `freq` - frequency in Hz
-void     lora_set_frequency(lora_def *lora, uint64_t freq);
+void     lora_set_frequency(lora_sx1276 *lora, uint64_t freq);
 
 // Set signal bandwidth.
 // Params:
 //  - `bw` - desired bandwidth, from LORA_BANDWIDTH_7_8_KHZ to LORA_BANDWIDTH_500_KHZ
 // For more information refer to section 4.1 of datasheet.
-void     lora_set_signal_bandwidth(lora_def *lora, uint64_t bw);
+void     lora_set_signal_bandwidth(lora_sx1276 *lora, uint64_t bw);
 
 // Set signal spreading factor.
 // Params:
 //  - `sf` - spreading factor. Value from 6 to 12
 // For more information refer to section 4.1 of datasheet.
-void     lora_set_spreading_factor(lora_def *lora, uint8_t sf);
+void     lora_set_spreading_factor(lora_sx1276 *lora, uint8_t sf);
 
 // Set coding rate.
 //  - `rate` - coding rate. Use any of LORA_CODING_RATE* constants.
 // For more information refer to section 4.1 of datasheet.
-void     lora_set_coding_rate(lora_def *lora, uint8_t rate);
+void     lora_set_coding_rate(lora_sx1276 *lora, uint8_t rate);
 
 // Enable / disable CRC
 // Params:
 //  - `enable` - set to 0 to disable CRC, any other value enables CRC.
-void     lora_set_crc(lora_def *lora, uint8_t enable);
+void     lora_set_crc(lora_sx1276 *lora, uint8_t enable);
 
 // Set length of packet preamble.
 // Params:
 //  - `len` - length of packet preamble
 // For more information refer to section 4.1.1.6 of datasheet
-void     lora_set_preamble_length(lora_def *lora, uint16_t len);
+void     lora_set_preamble_length(lora_sx1276 *lora, uint16_t len);
 
 // Set "implicit header" mode, meaning no packet header at all.
 // Refer to section 4.1.1.6 of datasheet
-void     lora_set_implicit_header_mode(lora_def *lora);
+void     lora_set_implicit_header_mode(lora_sx1276 *lora);
 
 // Set "explicit", i.e. always add packet header with various system information.
 // Refer to section 4.1.1.6 of datasheet
-void     lora_set_explicit_header_mode(lora_def *lora);
+void     lora_set_explicit_header_mode(lora_sx1276 *lora);
 
 
 // Received packet information //
 
 // Returns RSSI of last received packet
-uint8_t  lora_packet_rssi(lora_def *lora);
+uint8_t  lora_packet_rssi(lora_sx1276 *lora);
 
 // Returns SNR of last received packet
-uint8_t  lora_packet_snr(lora_def *lora);
+uint8_t  lora_packet_snr(lora_sx1276 *lora);
 
 
 // SEND packet routines //
 
 // Query modem for any ongoing packet transmission.
 // Returns 0 if no active transmission present
-uint8_t  lora_is_transmitting(lora_def *lora);
+uint8_t  lora_is_transmitting(lora_sx1276 *lora);
 
 // Send packet in non-blocking mode
 // Params:
@@ -180,7 +180,7 @@ uint8_t  lora_is_transmitting(lora_def *lora);
 //  - `LORA_BUSY` in case of active transmission ongoing
 //  - `LORA_OK` packet scheduled to be sent.
 //     Check state with `lora_is_transmitting()` or by interrupt.
-uint8_t  lora_send_packet(lora_def *lora, uint8_t *data, uint8_t data_len);
+uint8_t  lora_send_packet(lora_sx1276 *lora, uint8_t *data, uint8_t data_len);
 
 // Send packet and returns only when packet sent / error occured (blocking mode).
 // Params:
@@ -191,7 +191,7 @@ uint8_t  lora_send_packet(lora_def *lora, uint8_t *data, uint8_t data_len);
 //  - `LORA_BUSY` in case of active transmission ongoing
 //  - `LORA_TIMEOUT` packet wasn't transmitted in given time frame.
 //  - `LORA_OK` packet scheduled to be sent.
-uint8_t  lora_send_packet_blocking(lora_def *lora, uint8_t *data, uint8_t data_len, uint32_t timeout);
+uint8_t  lora_send_packet_blocking(lora_sx1276 *lora, uint8_t *data, uint8_t data_len, uint32_t timeout);
 
 
 // RECEIVE packet routines //
@@ -199,7 +199,7 @@ uint8_t  lora_send_packet_blocking(lora_def *lora, uint8_t *data, uint8_t data_l
 // Checks if packet modem has packet awaiting to be received
 
 // Returns 0 if no packet is available, or any positive integer in case packet is ready
-uint8_t  lora_is_packet_available(lora_def *lora);
+uint8_t  lora_is_packet_available(lora_sx1276 *lora);
 
 // Receives packet from LoRa modem
 // Params:
@@ -216,7 +216,7 @@ uint8_t  lora_is_packet_available(lora_def *lora);
 //  - `LORA_INVALID_HEADER` - packet with malformed header received.
 //  - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable
 //    this functionality explicitly, it is disabled by default.
-uint8_t  lora_receive_packet(lora_def *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error);
+uint8_t  lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error);
 
 // Receive packet in "blocking mode" i.e. function return only when packet:
 // 1. In case of single receive mode: when packet arrived or timeout occurred.
@@ -237,14 +237,14 @@ uint8_t  lora_receive_packet(lora_def *lora, uint8_t *buffer, uint8_t buffer_len
 //  - `LORA_INVALID_HEADER` - packet with malformed header received.
 //  - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable
 //    this functionality explicitly, it is disabled by default.
-uint8_t  lora_receive_packet_blocking(lora_def *lora, uint8_t *buffer, uint8_t buffer_len,
+uint8_t  lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
                                      uint32_t timeout, uint8_t *error);
 
 // Sets timeout for `lora_mode_receive_single()` in symbols.
 // Params:
 //  - `symbols` - timeout value. Valid from `4` to `1024` symbols.
 // For more information refer to datasheet section 4.1.5
-void     lora_set_rx_symbol_timeout(lora_def *lora, uint16_t symbols);
+void     lora_set_rx_symbol_timeout(lora_sx1276 *lora, uint16_t symbols);
 
 
 
