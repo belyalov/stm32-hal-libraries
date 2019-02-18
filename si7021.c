@@ -21,7 +21,6 @@
 #define SI7021_READ_ID2               0xFCC9 // Read Electronic ID 2nd Byte
 #define SI7021_FIRMWARE_VERSION       0x84B8 // Read Firmware Revision
 
-
 static uint8_t si7021_buf[4];
 
 // Helper to read 2 bytes of device ID

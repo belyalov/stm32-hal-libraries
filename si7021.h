@@ -23,12 +23,18 @@
 
 #define SI7021_MEASURE_FAILED            1024
 
+#ifdef __cplusplus
+#define EXPORT extern "C"
+#else
+#define EXPORT
+#endif
 
-uint64_t si7021_read_id(I2C_HandleTypeDef *hi2c);
-uint32_t si7021_set_config(I2C_HandleTypeDef *hi2c, uint8_t heater, uint8_t resolution);
-uint32_t si7021_set_heater_power(I2C_HandleTypeDef *hi2c, uint8_t power);
-uint32_t si7021_measure_humidity(I2C_HandleTypeDef *hi2c);
-uint32_t si7021_measure_temperature(I2C_HandleTypeDef *hi2c);
-uint32_t si7021_read_previous_temperature(I2C_HandleTypeDef *hi2c);
+
+EXPORT uint64_t si7021_read_id(I2C_HandleTypeDef *hi2c);
+EXPORT uint32_t si7021_set_config(I2C_HandleTypeDef *hi2c, uint8_t heater, uint8_t resolution);
+EXPORT uint32_t si7021_set_heater_power(I2C_HandleTypeDef *hi2c, uint8_t power);
+EXPORT uint32_t si7021_measure_humidity(I2C_HandleTypeDef *hi2c);
+EXPORT uint32_t si7021_measure_temperature(I2C_HandleTypeDef *hi2c);
+EXPORT uint32_t si7021_read_previous_temperature(I2C_HandleTypeDef *hi2c);
 
 #endif

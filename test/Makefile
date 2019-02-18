@@ -14,7 +14,8 @@ SOURCES = \
 	$(SOURCE_DIR)/si7021.c
 
 TESTS = \
-	$(TEST_DIR)/test_mocks.cpp
+	$(TEST_DIR)/test_mocks.cpp \
+	$(TEST_DIR)/test_si7021.cpp
 
 ARM_CC = arm-none-eabi-gcc
 CROSS_CC = gcc
@@ -49,7 +50,7 @@ $(ARM_BINARY): $(OBJECTS_ARM)
 
 # Cross compiled / tests
 $(BUILD_DIR_CROSS)/%.o: $(TEST_DIR)/%.cpp
-	$(CROSS_CXX) $(CROSS_CFLAGS) -c $^ -o $@
+	$(CROSS_CXX) -std=c++11 $(CROSS_CFLAGS) -c $^ -o $@
 
 $(BUILD_DIR_CROSS)/%.o: $(SOURCE_DIR)/%.c
 	$(CROSS_CC) $(CROSS_CFLAGS) -c $^ -o $@
