@@ -9,15 +9,15 @@ BUILD_DIR_CROSS = build_cross
 ARM_CC = arm-none-eabi-gcc
 CC = gcc
 
-INCLUDES = -I./src -I./mock
+INCLUDES = -I../ -I.
 ARM_C_DEFS = -mthumb
 
 CFLAGS = -Wall -Werror $(INCLUDES)
 
 all: $(BUILD_DIR_ARM)/lora_sx1276.o $(BUILD_DIR_CROSS)/lora_sx1276.o Makefile
 
-$(BUILD_DIR_ARM)/lora_sx1276.o: src/lora_sx1276.c
+$(BUILD_DIR_ARM)/lora_sx1276.o: ../lora_sx1276.c
 	$(ARM_CC) $(ARM_C_DEFS) -c $(CFLAGS) $< -o $@
 
-$(BUILD_DIR_CROSS)/lora_sx1276.o: src/lora_sx1276.c
+$(BUILD_DIR_CROSS)/lora_sx1276.o: ../lora_sx1276.c
 	$(CC) -c $(CFLAGS) $< -o $@
