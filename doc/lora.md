@@ -13,7 +13,7 @@ It's just `1.5`Kb of compiled code! :)
 Please be noticed - it **does not** implements LoRaWAN stack, it is pure LoRa - basically RADIO only.
 
 ## Quickstart
-Copy / add as submodule files under `src` directory to your STM32 HAL project, then:
+Copy / add as submodule files under `Src` directory to your STM32 HAL project, then:
 1. Include header:
 ```cpp
 /* Private includes ----------------------------------------------------------*/

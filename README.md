@@ -1,6 +1,10 @@
-# STM32 HAL library
-Set of useful high quality modules / utils for STM32 HAL usage
+# STM32 HAL libraries
+Set of useful high quality libraries to make interaction with various hardware / modules / etc simple.
 
-## Complete list
-- LoRa library (for devices based on `SX1276` chip), **does not** implements LoRaWAN
-- SI7021 temperature/humidity high precision sensor library
+## List of libraries
+- [LoRa library](https://github.com/belyalov/stm32-hal-libraries/blob/master/doc/lora.md) (for devices based on `SX1276` chip), **does not** implements LoRaWAN.
+- [SI7021 temperature/humidity](https://github.com/belyalov/stm32-hal-libraries/blob/master/doc/si7021.md) high precision I2C sensor.
+
+## Usage
+- Super simple way: just copy required files into your STM32 HAL project.. that's it!
+- [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
