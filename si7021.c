@@ -113,7 +113,7 @@ uint32_t si7021_measure_humidity(I2C_HandleTypeDef *hi2c)
   return (si7021_buf[0] << 8 | si7021_buf[1]) * 125 / 65536 - 6;
 }
 
-uint32_t si7021_measure_temperature(I2C_HandleTypeDef *hi2c)
+int32_t si7021_measure_temperature(I2C_HandleTypeDef *hi2c)
 {
   si7021_buf[0] = SI7021_MEASURE_TEMP_NOHOLD;
 
@@ -126,7 +126,7 @@ uint32_t si7021_measure_temperature(I2C_HandleTypeDef *hi2c)
   return _read_and_convert_temperature(hi2c);
 }
 
-uint32_t si7021_read_previous_temperature(I2C_HandleTypeDef *hi2c)
+int32_t si7021_read_previous_temperature(I2C_HandleTypeDef *hi2c)
 {
   si7021_buf[0] = SI7021_READ_PREV_TEMP;
 
