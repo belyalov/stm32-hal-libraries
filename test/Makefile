@@ -20,7 +20,7 @@ TESTS = \
 ARM_CC = arm-none-eabi-gcc
 CROSS_CC = gcc
 CROSS_CXX = g++
-GTEST_LIBS = /usr/local/lib/libgtest.a /usr/local/lib/libgtest_main.a
+GTEST_LIBS = /usr/local/lib/libgtest_main.a /usr/local/lib/libgtest.a -lpthread
 
 INCLUDES = -I../ -I.
 

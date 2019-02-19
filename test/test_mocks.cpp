@@ -1,8 +1,10 @@
 // Copyright (c) Konstantin Belyalov. All rights reserved.
 // Licensed under the MIT license.
 
-#include <string>
+#include <assert.h>
 #include <deque>
+#include <string>
+#include <string.h>
 
 #include "main.h"
 #include "test_mocks.h"

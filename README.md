@@ -1,4 +1,4 @@
-# STM32 HAL libraries
+# STM32 HAL libraries [![Build Status](https://travis-ci.org/belyalov/stm32-hal-libraries.svg?branch=master)](https://travis-ci.org/belyalov/stm32-hal-libraries)
 Set of useful high quality libraries to make interaction with various hardware / modules / etc simple.
 
 ## List of libraries

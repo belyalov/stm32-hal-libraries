@@ -5,10 +5,19 @@ language:
 
 install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi gcc make
+  - sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi gcc make wget cmake g++
+  - wget https://github.com/google/googletest/archive/release-1.8.1.tar.gz
+  - tar xfz release-1.8.1.tar.gz
+  - cd googletest-release-1.8.1
+  - mkdir build
+  - cd build
+  - cmake ../
+  - sudo make install
+  - cd ../..
 
 script:
   - cd test
   - mkdir build_arm
   - mkdir build_cross
-  - make
+  - make all
+  - make test
