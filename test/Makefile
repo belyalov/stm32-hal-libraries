@@ -11,10 +11,12 @@ TEST_DIR := .
 
 SOURCES = \
 	$(SOURCE_DIR)/lora_sx1276.c \
+	$(SOURCE_DIR)/debug.c \
 	$(SOURCE_DIR)/si7021.c
 
 TESTS = \
 	$(TEST_DIR)/test_mocks.cpp \
+	$(TEST_DIR)/test_debug.cpp \
 	$(TEST_DIR)/test_si7021.cpp
 
 ARM_CC = arm-none-eabi-gcc

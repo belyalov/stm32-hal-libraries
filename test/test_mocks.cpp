@@ -17,6 +17,8 @@ static deque<string> spi_transmit_queue;
 static deque<string> i2c_transmit_history;
 static deque<string> i2c_transmit_queue;
 
+static deque<string> uart_transmit_history;
+
 
 // SPI mock interface: check history / schedule data to be received
 string SPI_get_transmit_history_entry(size_t index)
@@ -85,6 +87,23 @@ void I2C_clear_transmit_queue()
   i2c_transmit_queue.clear();
 }
 
+
+// UART history
+string UART_get_transmit_history_entry(size_t index)
+{
+  return uart_transmit_history[index];
+}
+
+void UART_clear_transmit_history()
+{
+  uart_transmit_history.clear();
+}
+
+size_t UART_get_transmit_history_size()
+{
+  return uart_transmit_history.size();
+}
+
 // I2C mocks
 
 EXPORT HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)
@@ -106,6 +125,14 @@ EXPORT HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_
 
   memcpy(pData, data.data(), Size);
   i2c_transmit_queue.pop_front();
+
+  return HAL_OK;
+}
+
+// UART mocks
+EXPORT HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart2, uint8_t *pData, uint16_t Size, uint32_t Timeout)
+{
+  uart_transmit_history.push_back(string((const char*)pData, Size));
 
   return HAL_OK;
 }

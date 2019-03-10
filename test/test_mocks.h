@@ -15,4 +15,9 @@ void        I2C_queue_receive_data(const std::string& data);
 void        I2C_clear_transmit_history();
 void        I2C_clear_transmit_queue();
 
+// UART
+std::string UART_get_transmit_history_entry(size_t index);
+size_t      UART_get_transmit_history_size();
+void        UART_clear_transmit_history();
+
 #endif
