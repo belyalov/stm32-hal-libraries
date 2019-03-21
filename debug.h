@@ -12,6 +12,8 @@
 #define DEBUG_UART_TIMEOUT 100
 #endif
 
+size_t strlen(const char*);
+
 #define debug_print_str(uart, msg, val)                                              \
   do {                                                                               \
     HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
