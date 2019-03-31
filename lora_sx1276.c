@@ -1,6 +1,5 @@
 // Copyright (c) Konstantin Belyalov. All rights reserved.
 // Licensed under the MIT license.
-
 #include "lora_sx1276.h"
 
 // sx1276 registers
@@ -608,8 +607,9 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
     return LORA_ERROR;
   }
 
-  // Radio parameters like modem mode change (FSK / LoRa)
-  // Must be done in SLEEP mode (it also enabled LoRa modem)
+  // Modem parameters (freq, mode, etc) must be done in SLEEP mode.
+  lora_mode_sleep(lora);
+  // Enable LoRa mode (since it can be switched on only in sleep)
   lora_mode_sleep(lora);
 
   // Set frequency
