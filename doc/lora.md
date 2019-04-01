@@ -32,7 +32,7 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
   if (res != LORA_OK) {
     // Initialization failed
   }
-```cpp
+```
 3. Send packet:
 ```cpp
   // Send packet can be as simple as
