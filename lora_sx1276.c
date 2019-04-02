@@ -625,6 +625,8 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
   write_register(lora, REG_MODEM_CONFIG_3, 0x04);
   // Set default output power
   lora_set_tx_power(lora, LORA_DEFAULT_TX_POWER);
+  // Set default mode
+  lora_mode_standby(lora);
 
   return LORA_OK;
 }
