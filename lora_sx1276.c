@@ -69,6 +69,9 @@
 // Just to make it readable
 #define BIT_7                       (1 << 7)
 
+#define TRANSFER_MODE_DMA           1
+#define TRANSFER_MODE_BLOCKING      2
+
 // Debugging support
 // To enable debug information add
 // #define LORA_DEBUG
@@ -142,14 +145,19 @@ static void write_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len)
 }
 
 // Reads data "len" size from FIFO into buffer
-static void read_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len)
+static void read_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len, uint8_t mode)
 {
   uint8_t address = REG_FIFO;
 
   // Start SPI transaction, send address
   HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_RESET);
   uint32_t res1 = HAL_SPI_Transmit(lora->spi, &address, 1, lora->spi_timeout);
-  uint32_t res2 = HAL_SPI_Receive(lora->spi, buffer, len, lora->spi_timeout);
+  uint32_t res2;
+  if (mode == TRANSFER_MODE_DMA) {
+    res2 = HAL_SPI_Receive_DMA(lora->spi, buffer, len);
+  } else {
+    res2 = HAL_SPI_Receive(lora->spi, buffer, len, lora->spi_timeout);
+  }
   // End SPI transaction
   HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
 
@@ -510,7 +518,7 @@ uint8_t lora_is_packet_available(lora_sx1276 *lora)
   return  irqs & (IRQ_FLAGS_RX_DONE | IRQ_FLAGS_RX_TIMEOUT);
 }
 
-uint8_t lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error)
+static uint8_t lora_receive_packet_base(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error, uint8_t mode)
 {
   assert_param(lora && buffer && buffer_len > 0);
 
@@ -553,7 +561,7 @@ uint8_t lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_l
     uint8_t offset = read_register(lora, REG_FIFO_RX_CURRENT_ADDR);
     write_register(lora, REG_FIFO_ADDR_PTR, offset);
     // Read payload
-    read_fifo(lora, buffer, len);
+    read_fifo(lora, buffer, len, mode);
     DEBUGF("got packet len %d", len);
     res = LORA_OK;
   }
@@ -564,6 +572,16 @@ done:
   }
 
   return len;
+}
+
+uint8_t lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error)
+{
+  return lora_receive_packet_base(lora, buffer, buffer_len, error, TRANSFER_MODE_BLOCKING);
+}
+
+uint8_t lora_receive_packet_dma(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error)
+{
+  return lora_receive_packet_base(lora, buffer, buffer_len, error, TRANSFER_MODE_DMA);
 }
 
 uint8_t lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,

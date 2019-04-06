@@ -225,6 +225,28 @@ uint8_t  lora_is_packet_available(lora_sx1276 *lora);
 //    this functionality explicitly, it is disabled by default.
 uint8_t  lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error);
 
+// Receive packet from LoRa modem in DMA mode.
+// 1. In case of single receive mode: when packet arrived or timeout occurred.
+//    Please note that it is not enough to set `timeout` to something positive -
+//    you also need to set timeout in LoRa modem by calling `lora_set_rx_symbol_timeout` before.
+// 2. For continuous receiving mode will wait until packet arrived / timeout occurred.
+// Params:
+//  - `buffer` - pointer to buffer where copy packet to.
+//  - `buffer_len` - length of `buffer`. If incoming packet greater than `buffer_len` it will be truncated
+//    to fit `buffer_len`.
+//  - `error` - pointer to `uint8_t` to store error. Can be NULL - so no error information will be stored.
+// Returns actual packet length stored into `buffer`.
+//
+// `error` is one of:
+//  - `LORA_OK` - packet successfully received.
+//  - `LORA_EMPTY` - no packet received at the moment (check for packet by `lora_is_packet_available()` before).
+//  - `LORA_TIMEOUT` - timeout while receiving packet (only for single receive mode).
+//  - `LORA_INVALID_HEADER` - packet with malformed header received.
+//  - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable
+//    this functionality explicitly, it is disabled by default.
+uint8_t  lora_receive_packet_dma(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
+                                      uint8_t *error);
+
 // Receive packet in "blocking mode" i.e. function return only when packet:
 // 1. In case of single receive mode: when packet arrived or timeout occurred.
 //    Please note that it is not enough to set `timeout` to something positive -
