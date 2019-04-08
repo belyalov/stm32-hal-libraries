@@ -183,6 +183,13 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
     - `error` - pointer to `uint8_t` to store error. Can be `NULL` - so no error information will be stored.
    Returns actual packet length stored into `buffer`.
 
+ * `uint8_t  lora_receive_packet_dma(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error);`
+   Receives packet from LoRa modem using DMA mode
+    - `buffer` - pointer to buffer where copy packet to.
+    - `buffer_len` - length of `buffer`. If incoming packet greater than `buffer_len` it will be truncated to fit `buffer_len`.
+    - `error` - pointer to `uint8_t` to store error. Can be `NULL` - so no error information will be stored.
+   Returns actual packet length stored into `buffer`.
+
    `error` is one of:
     - `LORA_OK` - packet successfully received.
     - `LORA_EMPTY` - no packet received at the moment (check for packet by `lora_is_packet_available()` before).
