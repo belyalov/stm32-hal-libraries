@@ -14,10 +14,17 @@ SOURCES = \
 	$(SOURCE_DIR)/debug.c \
 	$(SOURCE_DIR)/si7021.c
 
+HEADERS = \
+	$(SOURCE_DIR)/debug.h \
+	$(SOURCE_DIR)/lora_sx1276.h \
+	$(SOURCE_DIR)/ring_buffer.h \
+	$(SOURCE_DIR)/si7021.h
+
 TESTS = \
 	$(TEST_DIR)/test_mocks.cpp \
 	$(TEST_DIR)/test_debug.cpp \
-	$(TEST_DIR)/test_si7021.cpp
+	$(TEST_DIR)/test_si7021.cpp \
+	$(TEST_DIR)/test_ring.cpp
 
 ARM_CC = arm-none-eabi-gcc
 CROSS_CC = gcc
@@ -57,14 +64,14 @@ $(BUILD_DIR_CROSS)/%.o: $(TEST_DIR)/%.cpp
 $(BUILD_DIR_CROSS)/%.o: $(SOURCE_DIR)/%.c
 	$(CROSS_CC) $(CROSS_CFLAGS) -c $^ -o $@
 
-$(TESTS_BINARY): $(OBJECTS_CROSS) Makefile
+$(TESTS_BINARY): $(OBJECTS_CROSS) $(HEADERS) Makefile
 	$(CROSS_CXX) $(GTEST_LIBS) $(OBJECTS_CROSS) -o $@
 
 test: $(TESTS_BINARY)
 	@$(BUILD_DIR_CROSS)/tests
 
 tests: $(TESTS_BINARY)
-	@$(BUILD_DIR_CROSS)/tests
+	@$(BUILD_DIR_CROSS)/tests --gtest_filter=ring*
 
 clean:
 	rm -f $(OBJECTS_ARM) $(OBJECTS_CROSS) $(ARM_BINARY) $(TESTS_BINARY)
