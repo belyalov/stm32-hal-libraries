@@ -18,13 +18,15 @@ HEADERS = \
 	$(SOURCE_DIR)/debug.h \
 	$(SOURCE_DIR)/lora_sx1276.h \
 	$(SOURCE_DIR)/ring_buffer.h \
-	$(SOURCE_DIR)/si7021.h
+	$(SOURCE_DIR)/si7021.h \
+	$(SOURCE_DIR)/utils.h
 
 TESTS = \
 	$(TEST_DIR)/test_mocks.cpp \
 	$(TEST_DIR)/test_debug.cpp \
 	$(TEST_DIR)/test_si7021.cpp \
-	$(TEST_DIR)/test_ring.cpp
+	$(TEST_DIR)/test_ring.cpp \
+	$(TEST_DIR)/test_utils.cpp
 
 ARM_CC = arm-none-eabi-gcc
 CROSS_CC = gcc
