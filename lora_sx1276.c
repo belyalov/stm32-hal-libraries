@@ -155,11 +155,12 @@ static void read_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len, uint8_t m
   uint32_t res2;
   if (mode == TRANSFER_MODE_DMA) {
     res2 = HAL_SPI_Receive_DMA(lora->spi, buffer, len);
+    // Do not end SPI here - must be done externally when DMA done
   } else {
     res2 = HAL_SPI_Receive(lora->spi, buffer, len, lora->spi_timeout);
+    // End SPI transaction
+    HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
   }
-  // End SPI transaction
-  HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
 
   if (res1 != HAL_OK || res2 != HAL_OK) {
     DEBUGF("SPI receive/transmit failed");
