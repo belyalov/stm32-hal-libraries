@@ -28,7 +28,7 @@
     })
 
 // "Pushes" item (basically does pointer advance) and returns it.
-// You must fill copy data yourself
+// You must copy data yourself
 #define RING_BUFFER_PUSH(_name)                                               \
     ({                                                                        \
         (_name)->head = ((_name)->head + 1) % (_name)->size;                  \
