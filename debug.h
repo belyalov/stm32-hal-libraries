@@ -17,69 +17,69 @@ size_t strlen(const char*);
 #define debug_print_str(uart, msg, val)                                              \
   do {                                                                               \
     HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
-    uint16_t _s_val_len = strlen((char*)val);                                        \
-    if (_s_val_len)                                                                  \
-      HAL_UART_Transmit(uart, (uint8_t*)val, strlen((char*)val), DEBUG_UART_TIMEOUT);\
+    uint16_t __s_val_len = strlen((char*)val);                                       \
+    if (__s_val_len)                                                                 \
+      HAL_UART_Transmit(uart, (uint8_t*)val, __s_val_len, DEBUG_UART_TIMEOUT);\
   } while (0);
 
 #define debug_print_strln(uart, msg, val)                                            \
   do {                                                                               \
     HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
-    uint16_t _s_val_len = strlen((char*)val);                                        \
-    if (_s_val_len)                                                                  \
-      HAL_UART_Transmit(uart, (uint8_t*)val, strlen((char*)val), DEBUG_UART_TIMEOUT);\
+    uint16_t __s_val_len = strlen((char*)val);                                       \
+    if (__s_val_len)                                                                 \
+      HAL_UART_Transmit(uart, (uint8_t*)val, __s_val_len, DEBUG_UART_TIMEOUT);       \
     HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);                \
   } while (0);
 
-#define debug_print_uint64(uart, msg, val)                                        \
-  do {                                                                            \
-    uint8_t buf[16];                                                              \
-    uint8_t *sval = debug_uint64_to_string(val, buf, sizeof(buf));                \
-    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);      \
-    HAL_UART_Transmit(uart, sval, strlen((char*)sval), DEBUG_UART_TIMEOUT);       \
+#define debug_print_uint64(uart, msg, val)                                           \
+  do {                                                                               \
+    uint8_t __dbuf[16];                                                              \
+    uint8_t *__sval = debug_uint64_to_string(val, __dbuf, sizeof(__dbuf));           \
+    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
+    HAL_UART_Transmit(uart, __sval, strlen((char*)__sval), DEBUG_UART_TIMEOUT);      \
   } while (0);
 
-#define debug_print_uint64ln(uart, msg, val)                                      \
-  do {                                                                            \
-    uint8_t buf[16];                                                              \
-    uint8_t *sval = debug_uint64_to_string(val, buf, sizeof(buf));                \
-    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);      \
-    HAL_UART_Transmit(uart, sval, strlen((char*)sval), DEBUG_UART_TIMEOUT);       \
-    HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);             \
+#define debug_print_uint64ln(uart, msg, val)                                         \
+  do {                                                                               \
+    uint8_t __dbuf[16];                                                              \
+    uint8_t *__sval = debug_uint64_to_string(val, __dbuf, sizeof(__dbuf));           \
+    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
+    HAL_UART_Transmit(uart, __sval, strlen((char*)__sval), DEBUG_UART_TIMEOUT);      \
+    HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);                \
   } while (0);
 
-#define debug_print_int64(uart, msg, val)                                        \
-  do {                                                                           \
-    uint8_t buf[16];                                                             \
-    uint8_t *sval = debug_int64_to_string(val, buf, sizeof(buf));                \
-    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);     \
-    HAL_UART_Transmit(uart, sval, strlen((char*)sval), DEBUG_UART_TIMEOUT);      \
+#define debug_print_int64(uart, msg, val)                                            \
+  do {                                                                               \
+    uint8_t __dbuf[16];                                                              \
+    uint8_t *__sval = debug_int64_to_string(val, __dbuf, sizeof(__dbuf));            \
+    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
+    HAL_UART_Transmit(uart, __sval, strlen((char*)__sval), DEBUG_UART_TIMEOUT);      \
   } while (0);
 
-#define debug_print_int64ln(uart, msg, val)                                      \
-  do {                                                                           \
-    uint8_t buf[16];                                                             \
-    uint8_t *sval = debug_int64_to_string(val, buf, sizeof(buf));                \
-    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);     \
-    HAL_UART_Transmit(uart, sval, strlen((char*)sval), DEBUG_UART_TIMEOUT);      \
-    HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);            \
+#define debug_print_int64ln(uart, msg, val)                                          \
+  do {                                                                               \
+    uint8_t __dbuf[16];                                                              \
+    uint8_t *__sval = debug_int64_to_string(val, __dbuf, sizeof(__dbuf));            \
+    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
+    HAL_UART_Transmit(uart, __sval, strlen((char*)__sval), DEBUG_UART_TIMEOUT);      \
+    HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);                \
   } while (0);
 
-#define debug_print_hex64(uart, msg, val)                                        \
-  do {                                                                           \
-    uint8_t buf[16];                                                             \
-    uint8_t *sval = debug_uint64_to_hexstring(val, buf, sizeof(buf));            \
-    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);     \
-    HAL_UART_Transmit(uart, sval, strlen((char*)sval), DEBUG_UART_TIMEOUT);      \
+#define debug_print_hex64(uart, msg, val)                                            \
+  do {                                                                               \
+    uint8_t __dbuf[16];                                                              \
+    uint8_t *__sval = debug_uint64_to_hexstring(val, __dbuf, sizeof(__dbuf));        \
+    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
+    HAL_UART_Transmit(uart, __sval, strlen((char*)__sval), DEBUG_UART_TIMEOUT);      \
   } while (0);
 
-#define debug_print_hex64ln(uart, msg, val)                                      \
-  do {                                                                           \
-    uint8_t buf[16];                                                             \
-    uint8_t *sval = debug_uint64_to_hexstring(val, buf, sizeof(buf));            \
-    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);     \
-    HAL_UART_Transmit(uart, sval, strlen((char*)sval), DEBUG_UART_TIMEOUT);      \
-    HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);            \
+#define debug_print_hex64ln(uart, msg, val)                                          \
+  do {                                                                               \
+    uint8_t __dbuf[16];                                                              \
+    uint8_t *__sval = debug_uint64_to_hexstring(val, __dbuf, sizeof(__dbuf));        \
+    HAL_UART_Transmit(uart, (uint8_t*)msg, strlen(msg), DEBUG_UART_TIMEOUT);         \
+    HAL_UART_Transmit(uart, __sval, strlen((char*)__sval), DEBUG_UART_TIMEOUT);      \
+    HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);                \
   } while (0);
 
 #else // ifdef DEBUG
