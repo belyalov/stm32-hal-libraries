@@ -40,7 +40,7 @@
 #define LORA_CODING_RATE_4_7               0x18
 #define LORA_CODING_RATE_4_8               0x20
 
-// Signal bandwidth
+// Signal bandwidth ("spread factor")
 enum {
   LORA_BANDWIDTH_7_8_KHZ = 0,
   LORA_BANDWIDTH_10_4_KHZ,
@@ -49,7 +49,7 @@ enum {
   LORA_BANDWIDTH_31_25_KHZ,
   LORA_BANDWIDTH_41_7_KHZ,
   LORA_BANDWIDTH_62_5_KHZ,
-  LORA_BANDWIDTH_125_KHZ,
+  LORA_BANDWIDTH_125_KHZ,  // default SF - 7
   LORA_BANDWIDTH_250_KHZ,
   LORA_BANDWIDTH_500_KHZ,
   LORA_BW_LAST,
@@ -225,7 +225,7 @@ uint8_t  lora_is_packet_available(lora_sx1276 *lora);
 //    this functionality explicitly, it is disabled by default.
 uint8_t  lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error);
 
-// Receive packet from LoRa modem in DMA mode.
+// Start receiving packet from LoRa modem in DMA mode.
 // 1. In case of single receive mode: when packet arrived or timeout occurred.
 //    Please note that it is not enough to set `timeout` to something positive -
 //    you also need to set timeout in LoRa modem by calling `lora_set_rx_symbol_timeout` before.
@@ -244,8 +244,12 @@ uint8_t  lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_
 //  - `LORA_INVALID_HEADER` - packet with malformed header received.
 //  - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable
 //    this functionality explicitly, it is disabled by default.
-uint8_t  lora_receive_packet_dma(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
-                                      uint8_t *error);
+uint8_t  lora_receive_packet_dma_start(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
+                                       uint8_t *error);
+
+// Finish receive packet in DMA dome
+void     lora_receive_packet_dma_complete(lora_sx1276 *lora);
+
 
 // Receive packet in "blocking mode" i.e. function return only when packet:
 // 1. In case of single receive mode: when packet arrived or timeout occurred.

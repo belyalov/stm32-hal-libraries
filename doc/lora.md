@@ -183,8 +183,8 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
     - `error` - pointer to `uint8_t` to store error. Can be `NULL` - so no error information will be stored.
    Returns actual packet length stored into `buffer`.
 
- * `uint8_t  lora_receive_packet_dma(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error);`
-   Receives packet from LoRa modem using DMA mode
+ * `uint8_t  lora_receive_packet_dma_start(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error);`
+   Receives packet from LoRa modem using DMA mode. **You must call `lora_receive_packet_dma_complete() from DMA receive done callback**
     - `buffer` - pointer to buffer where copy packet to.
     - `buffer_len` - length of `buffer`. If incoming packet greater than `buffer_len` it will be truncated to fit `buffer_len`.
     - `error` - pointer to `uint8_t` to store error. Can be `NULL` - so no error information will be stored.
@@ -196,6 +196,9 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
     - `LORA_TIMEOUT` - timeout while receiving packet (only for single receive mode).
     - `LORA_INVALID_HEADER` - packet with malformed header received.
     - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable this functionality explicitly, it is disabled by default.
+
+ * `void  lora_receive_packet_dma_complete(lora_sx1276 *lora);`
+   Completes DMA based receive packet initiated by `lora_receive_packet_dma_start()`
 
  * `uint8_t  lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint32_t timeout, uint8_t *error)`
    Receive packet in "blocking mode" i.e. function return only when packet:

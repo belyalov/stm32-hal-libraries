@@ -563,7 +563,6 @@ static uint8_t lora_receive_packet_base(lora_sx1276 *lora, uint8_t *buffer, uint
     write_register(lora, REG_FIFO_ADDR_PTR, offset);
     // Read payload
     read_fifo(lora, buffer, len, mode);
-    DEBUGF("got packet len %d", len);
     res = LORA_OK;
   }
 
@@ -580,9 +579,15 @@ uint8_t lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_l
   return lora_receive_packet_base(lora, buffer, buffer_len, error, TRANSFER_MODE_BLOCKING);
 }
 
-uint8_t lora_receive_packet_dma(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error)
+uint8_t lora_receive_packet_dma_start(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error)
 {
   return lora_receive_packet_base(lora, buffer, buffer_len, error, TRANSFER_MODE_DMA);
+}
+
+void lora_receive_packet_dma_complete(lora_sx1276 *lora)
+{
+  // Nothing to do expect - just end SPI transaction
+  HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
 }
 
 uint8_t lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
