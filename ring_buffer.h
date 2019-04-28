@@ -36,6 +36,10 @@
         &(_name)->buffer[(_name)->head];   \
     })
 
+// Returns pointer to next element. Does NOT advance pointer
+// You must copy data yourself
+#define RING_BUFFER_GET_NEXT(_name) (&(_name)->buffer[(((_name)->head + 1) % (_name)->size)])
+
 // POPs item from ring buffer (NOTE: it does not check for empty queue)
 // and returns pointer to the item
 #define RING_BUFFER_POP(_name)                                      \
