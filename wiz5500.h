@@ -38,6 +38,7 @@
 #define WIZ5500_SOCKET_INT_RECV     (1 << 2)
 #define WIZ5500_SOCKET_INT_TIMEOUT  (1 << 3)
 #define WIZ5500_SOCKET_INT_SENDOK   (1 << 4)
+#define WIZ5500_SOCKET_INT_ALL      0x1F
 
 
 // Wiz5500 params
@@ -63,19 +64,21 @@ uint64_t wiz5500_set_mac(wiz5500 *wiz, uint64_t mac);
 uint8_t wiz5500_set_socket_mode(wiz5500 *wiz, uint8_t socket, uint8_t mode);
 
 // UDP sockets //
-uint8_t wiz5500_udp_open_socket(wiz5500 *wiz, uint8_t socket, uint16_t source_port);
-uint8_t wiz5500_udp_sendto_blocking(wiz5500 *wiz, uint8_t socket, uint32_t dst_ip, uint16_t dst_port, uint8_t *data, uint16_t data_size);
-uint8_t wiz5500_udp_sendto_dma_start(wiz5500 *wiz, uint8_t socket, uint32_t dst_ip, uint16_t dst_port, uint8_t *data, uint16_t data_size);
-uint8_t wiz5500_udp_send_dma_complete(wiz5500 *wiz, uint8_t socket);
-uint8_t wiz5500_udp_exec_send(wiz5500 *wiz, uint8_t socket);
+uint8_t  wiz5500_udp_open_socket(wiz5500 *wiz, uint8_t socket, uint16_t source_port);
+uint8_t  wiz5500_udp_sendto_blocking(wiz5500 *wiz, uint8_t socket, uint32_t dst_ip, uint16_t dst_port, uint8_t *data, uint16_t data_size);
+uint8_t  wiz5500_udp_sendto_dma_start(wiz5500 *wiz, uint8_t socket, uint32_t dst_ip, uint16_t dst_port, uint8_t *data, uint16_t data_size);
+uint8_t  wiz5500_udp_sendto_dma_complete(wiz5500 *wiz, uint8_t socket);
+uint16_t wiz5500_udp_received_size(wiz5500 *wiz, uint8_t socket);
+uint8_t  wiz5500_receive_from_blocking(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16_t data_len);
+uint8_t wiz5500_receive_from_dma_start(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16_t data_len);
+uint8_t  wiz5500_receive_from_dma_complete(wiz5500 *wiz, uint8_t socket);
 
 // Common sockets //
 uint8_t  wiz5500_get_socket_status(wiz5500 *wiz, uint8_t socket);
-uint8_t  wiz5500_copy_tx_data(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16_t data_size, uint8_t dma);
 
-uint8_t  wiz5500_socket_read_interrupt(wiz5500 *wiz, uint8_t socket);
 uint8_t  wiz5500_socket_enable_interrupt(wiz5500 *wiz, uint8_t socket, uint8_t ints);
-uint8_t  wiz5500_socket_clear_interrupt(wiz5500 *wiz, uint8_t socket);
+uint8_t  wiz5500_socket_read_interrupt(wiz5500 *wiz, uint8_t socket);
+uint8_t  wiz5500_socket_clear_interrupt(wiz5500 *wiz, uint8_t socket, uint8_t ints);
 
 uint16_t wiz5500_get_socket_source_port(wiz5500 *wiz, uint8_t socket);
 uint8_t  wiz5500_set_socket_dst_ip(wiz5500 *wiz, uint8_t socket, uint32_t ip);

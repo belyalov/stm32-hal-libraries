@@ -60,11 +60,12 @@
 #define SOCKET_TTL                  0x0016
 #define SOCKET_FRAGMENT             0x002D
 #define SOCKET_KEEPALIVE_TIMEOUT    0x002F
+
 #define SOCKET_RX_BUFFER_SIZE       0x001E
-#define SOCKET_RX_READ_POINTER      0x0022
 #define SOCKET_RX_RECEIVED_SIZE     0x0026
-#define SOCKET_RX_READ_DATA_POINTER 0x0028
+#define SOCKET_RX_READ_POINTER      0x0028
 #define SOCKET_RX_WRITE_POINTER     0x002A
+
 #define SOCKET_TX_BUFFER_SIZE       0x001F
 #define SOCKET_TX_FREE_SIZE         0x0020
 #define SOCKET_TX_READ_POINTER      0x0022
@@ -146,12 +147,19 @@ static uint16_t _read_register16(wiz5500 *wiz, uint16_t addr, uint8_t reg)
     DEBUGLN("transmit / receive failed");
   }
 
-  // DEBUG("read: ");
-  // for(int i = 0; i < 2; i++) {
-  //   DEBUG_UINT_HEX(" ", payload[i]);
-  // }
-
   return payload[0] << 8 | payload[1];
+}
+
+// Read uint16_t multiple times as per datasheet :)
+static uint16_t _read_register16_for_sure(wiz5500 *wiz, uint16_t addr, uint8_t reg)
+{
+  uint16_t val;
+
+  do {
+    val = _read_register16(wiz, addr, reg);
+  } while (val != _read_register16(wiz, addr, reg));
+
+  return val;
 }
 
 static uint8_t _write_register16(wiz5500 *wiz, uint16_t addr, uint8_t reg, uint16_t value)
@@ -363,16 +371,16 @@ uint8_t wiz5500_set_socket_dst_port(wiz5500 *wiz, uint8_t socket, uint16_t port)
   return _write_register16(wiz, SOCKET_DESTINATION_PORT, REGISTER_SOCKET_N(socket), port);
 }
 
-uint8_t wiz5500_copy_tx_data(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16_t data_size, uint8_t dma)
+static uint8_t tx_data(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16_t data_size, uint8_t dma)
 {
   // Check free buffer of wiz5500
-  uint16_t free_buf = _read_register16(wiz, SOCKET_TX_FREE_SIZE, REGISTER_SOCKET_N(socket));
+  uint16_t free_buf = _read_register16_for_sure(wiz, SOCKET_TX_FREE_SIZE, REGISTER_SOCKET_N(socket));
   if (free_buf < data_size) {
     return WIZ5500_TX_FULL;
   }
 
   // Get TX writer ptr
-  uint16_t tx_wr_ptr = _read_register16(wiz, SOCKET_TX_WRITE_POINTER, REGISTER_SOCKET_N(socket));
+  uint16_t tx_wr_ptr = _read_register16_for_sure(wiz, SOCKET_TX_WRITE_POINTER, REGISTER_SOCKET_N(socket));
 
   // Update TX writer ptr: current + data_len
   uint8_t res = _write_register16(wiz, SOCKET_TX_WRITE_POINTER, REGISTER_SOCKET_N(socket), tx_wr_ptr + data_size);
@@ -389,10 +397,8 @@ uint8_t wiz5500_copy_tx_data(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16
   HAL_GPIO_WritePin(wiz->nss_port, wiz->nss_pin, GPIO_PIN_RESET);
   res = HAL_SPI_Transmit(wiz->spi, control, sizeof(control), wiz->spi_timeout);
   if (dma) {
-    // Do not disable SPI - must be done by following call of exec_send()
-    int ress = HAL_SPI_Transmit_DMA(wiz->spi, data, data_size);
-    return ress;
-    // return HAL_SPI_Transmit_DMA(wiz->spi, data, data_size);
+    // Do not disable SPI - must be done by following call of *dma_complete()
+    return HAL_SPI_Transmit_DMA(wiz->spi, data, data_size);
   } else {
     res = HAL_SPI_Transmit(wiz->spi, data, data_size, wiz->spi_timeout);
     HAL_GPIO_WritePin(wiz->nss_port, wiz->nss_pin, GPIO_PIN_SET);
@@ -400,6 +406,42 @@ uint8_t wiz5500_copy_tx_data(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16
 
   return res;
 }
+
+static uint8_t rx_data_offset(wiz5500 *wiz, uint8_t socket, uint16_t offset, uint8_t *data, uint16_t data_len, uint8_t dma)
+{
+  // Get RX read ptr
+  uint16_t rx_rd_ptr = _read_register16_for_sure(wiz, SOCKET_RX_READ_POINTER, REGISTER_SOCKET_N(socket));
+  rx_rd_ptr += offset;
+
+  // Update RX read ptr: current + offset + data_len
+  int res = _write_register16(wiz, SOCKET_RX_READ_POINTER, REGISTER_SOCKET_N(socket), rx_rd_ptr + data_len);
+  if (res != HAL_OK) {
+    return res;
+  }
+
+  // Receive data
+  uint8_t control[3] = {
+    rx_rd_ptr >> 8,
+    rx_rd_ptr & 0xff,
+    ((REGISTER_SOCKET_N(socket) + REGISTER_SOCKET_RX) << 3) | DATA_MODE_VARIABLE | DATA_READ,
+  };
+  HAL_GPIO_WritePin(wiz->nss_port, wiz->nss_pin, GPIO_PIN_RESET);
+  res = HAL_SPI_Transmit(wiz->spi, control, sizeof(control), wiz->spi_timeout);
+  if (res != HAL_OK) {
+    return res;
+  }
+  if (dma) {
+    // Do not disable SPI - must be done by following call of *dma_complete()
+    return HAL_SPI_Receive_DMA(wiz->spi, data, data_len);
+  } else {
+    res = HAL_SPI_Receive(wiz->spi, data, data_len, wiz->spi_timeout);
+    HAL_GPIO_WritePin(wiz->nss_port, wiz->nss_pin, GPIO_PIN_SET);
+  }
+
+  return res;
+}
+
+
 
 uint8_t wiz5500_udp_open_socket(wiz5500 *wiz, uint8_t socket, uint16_t source_port)
 {
@@ -415,7 +457,6 @@ uint8_t wiz5500_udp_open_socket(wiz5500 *wiz, uint8_t socket, uint16_t source_po
     return res;
   }
 
-  // Finally issue OPEN command
   return _write_register8(wiz, SOCKET_COMMAND, REGISTER_SOCKET_N(socket), SOCKET_COMMAND_OPEN);
 }
 
@@ -432,14 +473,14 @@ uint8_t wiz5500_udp_sendto_blocking(wiz5500 *wiz, uint8_t socket, uint32_t dst_i
   }
 
   // Copy data into wiz5500
-  wiz5500_copy_tx_data(wiz, socket, data, data_size, 0);
+  tx_data(wiz, socket, data, data_size, 0);
   // Send packet
   _write_register8(wiz, SOCKET_COMMAND, REGISTER_SOCKET_N(socket), SOCKET_COMMAND_SEND);
 
   // Wait until packet sent
   uint8_t ints = 0;
   while (!(ints = wiz5500_socket_read_interrupt(wiz, socket))) {
-    HAL_Delay(10);
+    HAL_Delay(1);
   }
 
   return ints & WIZ5500_SOCKET_INT_SENDOK ? WIZ5500_OK : WIZ5500_ERROR;
@@ -458,16 +499,69 @@ uint8_t wiz5500_udp_sendto_dma_start(wiz5500 *wiz, uint8_t socket, uint32_t dst_
   }
 
   // Copy data into wiz5500 using DMA
-  return wiz5500_copy_tx_data(wiz, socket, data, data_size, 1);
+  return tx_data(wiz, socket, data, data_size, 1);
 }
 
-uint8_t wiz5500_udp_send_dma_complete(wiz5500 *wiz, uint8_t socket)
+uint8_t wiz5500_udp_sendto_dma_complete(wiz5500 *wiz, uint8_t socket)
 {
   // End previous SPI transaction (DMA)
   HAL_GPIO_WritePin(wiz->nss_port, wiz->nss_pin, GPIO_PIN_SET);
 
   // Send packet
   return _write_register8(wiz, SOCKET_COMMAND, REGISTER_SOCKET_N(socket), SOCKET_COMMAND_SEND);
+}
+
+
+uint16_t wiz5500_udp_received_size(wiz5500 *wiz, uint8_t socket)
+{
+  // In case of UDP mode each packet contains head of 8 bytes:
+  // src / dst IP, so subtracting 8 bytes
+  return _read_register16_for_sure(wiz, SOCKET_RX_RECEIVED_SIZE, REGISTER_SOCKET_N(socket)) - 8;
+}
+
+uint8_t wiz5500_receive_from_blocking(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16_t data_len)
+{
+  uint16_t len;
+
+  while (!(len = wiz5500_udp_received_size(wiz, socket))) {
+    HAL_Delay(1);
+  }
+
+  if (len > data_len) {
+    len = data_len;
+  }
+
+  // Transfer data
+  rx_data_offset(wiz, socket, 8, data, len, 0);
+  // Complete recv
+  _write_register8(wiz, SOCKET_COMMAND, REGISTER_SOCKET_N(socket), SOCKET_COMMAND_RECV);
+
+  return len;
+}
+
+uint8_t wiz5500_receive_from_dma_start(wiz5500 *wiz, uint8_t socket, uint8_t *data, uint16_t data_len)
+{
+  uint16_t len = wiz5500_udp_received_size(wiz, socket);
+  if (len == 0) {
+    // No packet available
+    return 0;
+  }
+
+  if (len > data_len) {
+    len = data_len;
+  }
+
+  // Copy data from WIZ5500 using DMA
+  return rx_data_offset(wiz, socket, 8, data, len, 1);
+}
+
+uint8_t wiz5500_receive_from_dma_complete(wiz5500 *wiz, uint8_t socket)
+{
+  // End previous SPI transaction (DMA)
+  HAL_GPIO_WritePin(wiz->nss_port, wiz->nss_pin, GPIO_PIN_SET);
+
+  // Complete receive - issue RECV command
+  return _write_register8(wiz, SOCKET_COMMAND, REGISTER_SOCKET_N(socket), SOCKET_COMMAND_RECV);
 }
 
 
@@ -507,13 +601,13 @@ uint8_t  wiz5500_socket_read_interrupt(wiz5500 *wiz, uint8_t socket)
   return _read_register8(wiz, SOCKET_INTERRUPT, REGISTER_SOCKET_N(socket));
 }
 
-uint8_t  wiz5500_socket_clear_interrupt(wiz5500 *wiz, uint8_t socket)
+uint8_t  wiz5500_socket_clear_interrupt(wiz5500 *wiz, uint8_t socket, uint8_t ints)
 {
   assert_param(socket <= MAX_SOCKET_NUMBER);
 
-  // Clear all socket interrupts
-  _write_register8(wiz, SOCKET_INTERRUPT, REGISTER_SOCKET_N(socket), 0x1f);
-  // Clear global socket interrupt
+  // Clear all socket interrupt flags
+  _write_register8(wiz, SOCKET_INTERRUPT, REGISTER_SOCKET_N(socket), ints);
+  // Clear global socket interrupt flag
   _write_register8(wiz, COMMON_SOCKET_INTERRUPT, REGISTER_COMMON, 1 << socket);
 
   return WIZ5500_OK;
