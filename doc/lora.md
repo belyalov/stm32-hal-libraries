@@ -150,6 +150,17 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
    Query modem for any ongoing packet transmission.
    Returns `0` if no active transmission present
 
+ * `uint8_t  lora_send_packet_dma_start(lora_sx1276 *lora, uint8_t *data, uint8_t data_len)`
+   Sends packet using DMA. You **must** call `lora_send_packet_dma_complete()` when DMA is done.
+    - `data` - pointer to buffer to be transmitted
+    - `data_len` - how many bytes to transmit from `data` buffer.
+   Returns:
+    - `LORA_BUSY` in case of active transmission ongoing
+    - `LORA_OK` packet scheduled to be sent.
+
+ * `void  lora_send_packet_dma_complete(lora_sx1276 *lora);`
+   Completes DMA based send packet initiated by `lora_send_packet_dma_start()`
+
  * `uint8_t  lora_send_packet_blocking(lora_sx1276 *lora, uint8_t *data, uint8_t data_len, uint32_t timeout)`
    Send packet in non-blocking mode
     - `data` - pointer to buffer to be transmitted

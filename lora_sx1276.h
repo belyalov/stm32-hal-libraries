@@ -189,7 +189,21 @@ uint8_t  lora_is_transmitting(lora_sx1276 *lora);
 //     Check state with `lora_is_transmitting()` or by interrupt.
 uint8_t  lora_send_packet(lora_sx1276 *lora, uint8_t *data, uint8_t data_len);
 
-// Send packet and returns only when packet sent / error occured (blocking mode).
+// Send packet using DMA mode.
+// You must call lora_send_packet_dma_complete() from DMA transfer complete callback
+// Params:
+//  - `data` - pointer to buffer to be transmitted
+//  - `data_len` - how many bytes to transmit from `data` buffer.
+// Returns:
+//  - `LORA_BUSY` in case of active transmission ongoing
+//  - `LORA_TIMEOUT` packet wasn't transmitted in given time frame.
+//  - `LORA_OK` packet scheduled to be sent.
+uint8_t  lora_send_packet_dma_start(lora_sx1276 *lora, uint8_t *data, uint8_t data_len);
+
+// Finish packet send initiated by lora_send_packet_dma_start()
+void     lora_send_packet_dma_complete(lora_sx1276 *lora);
+
+// Send packet and returns only when packet sent / error occurred (blocking mode).
 // Params:
 //  - `data` - pointer to buffer to be transmitted
 //  - `data_len` - how many bytes to transmit from `data` buffer.

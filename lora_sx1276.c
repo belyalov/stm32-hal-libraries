@@ -128,13 +128,18 @@ static void write_register(lora_sx1276 *lora, uint8_t address, uint8_t value)
 }
 
 // Copies bytes from buffer into radio FIFO given len length
-static void write_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len)
+static void write_fifo(lora_sx1276 *lora, uint8_t *buffer, uint8_t len, uint8_t mode)
 {
   uint8_t address = REG_FIFO | BIT_7;
 
   // Start SPI transaction, send address
   HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_RESET);
   uint32_t res1 = HAL_SPI_Transmit(lora->spi, &address, 1, lora->spi_timeout);
+  if (mode == TRANSFER_MODE_DMA) {
+    HAL_SPI_Transmit_DMA(lora->spi, buffer, len);
+    // Intentionally leave SPI active - let DMA finish transfer
+    return;
+  }
   uint32_t res2 = HAL_SPI_Transmit(lora->spi, buffer, len, lora->spi_timeout);
   // End SPI transaction
   HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
@@ -438,7 +443,7 @@ uint8_t lora_is_transmitting(lora_sx1276 *lora)
   return opmode & (1 << OPMODE_TX) ? LORA_BUSY : LORA_OK;
 }
 
-uint8_t lora_send_packet(lora_sx1276 *lora, uint8_t *data, uint8_t data_len)
+static uint8_t lora_send_packet_base(lora_sx1276 *lora, uint8_t *data, uint8_t data_len, uint8_t mode)
 {
   assert_param(lora && data && data_len > 0);
 
@@ -455,14 +460,35 @@ uint8_t lora_send_packet(lora_sx1276 *lora, uint8_t *data, uint8_t data_len)
   // Set FIFO pointer to the beginning of the buffer
   write_register(lora, REG_FIFO_ADDR_PTR, lora->tx_base_addr);
   write_register(lora, REG_FIFO_TX_BASE_ADDR, lora->tx_base_addr);
-  // Copy packet into radio FIFO
-  write_fifo(lora, data, data_len);
   write_register(lora, REG_PAYLOAD_LENGTH, data_len);
+
+  // Copy packet into radio FIFO
+  write_fifo(lora, data, data_len, mode);
+  if (mode == TRANSFER_MODE_DMA) {
+    return LORA_OK;
+  }
 
   // Put radio in TX mode - packet will be transmitted ASAP
   set_mode(lora, OPMODE_TX);
+}
 
-  return LORA_OK;
+uint8_t lora_send_packet(lora_sx1276 *lora, uint8_t *data, uint8_t data_len)
+{
+  return lora_send_packet_base(lora, data, data_len, TRANSFER_MODE_BLOCKING);
+}
+
+uint8_t lora_send_packet_dma_start(lora_sx1276 *lora, uint8_t *data, uint8_t data_len)
+{
+  return lora_send_packet_base(lora, data, data_len, TRANSFER_MODE_DMA);
+}
+
+// Finish packet send initiated by lora_send_packet_dma_start()
+void  lora_send_packet_dma_complete(lora_sx1276 *lora)
+{
+  // End transfer
+  HAL_GPIO_WritePin(lora->nss_port, lora->nss_pin, GPIO_PIN_SET);
+  // Send packet
+  set_mode(lora, OPMODE_TX);
 }
 
 uint8_t lora_send_packet_blocking(lora_sx1276 *lora, uint8_t *data, uint8_t data_len, uint32_t timeout)
