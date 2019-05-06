@@ -166,16 +166,16 @@ TEST(debug, debug_print_hex64)
 
 TEST(debug, debug_print_str)
 {
-  map<pair<string, string>, string> runs = {
-    { {"value ", "yo"}, "value yo"},
-    { {"value", ""}, "value"},
+  map<string, string> runs = {
+    {"value", "value"},
+    {"value 2", "value 2"},
   };
 
   for (auto it = runs.begin(); it != runs.end(); ++it) {
     UART_clear_transmit_history();
     // test macro
-    debug_print_str(uart, it->first.first.c_str(), it->first.second.c_str());
-    debug_print_strln(uart, it->first.first.c_str(), it->first.second.c_str());
+    debug_print_str(uart, it->first.c_str());
+    debug_print_strln(uart, it->first.c_str());
     // Concat UART history
     string result;
     for (size_t i = 0; i < UART_get_transmit_history_size(); i++) {

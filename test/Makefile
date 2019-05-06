@@ -38,8 +38,8 @@ INCLUDES = -I../ -I.
 ARM_CFLAGS = -mthumb -Wall -Werror $(INCLUDES)
 CROSS_CFLAGS = -Wall $(INCLUDES) -I/usr/local/include -I/usr/include
 
-OBJECTS_ARM = $(addprefix $(BUILD_DIR_ARM)/,$(notdir $(SOURCES:.c=.o)))
-OBJECTS_ARM += $(BUILD_DIR_ARM)/main_arm.o
+OBJECTS_ARM := $(BUILD_DIR_ARM)/main_arm.o
+OBJECTS_ARM += $(addprefix $(BUILD_DIR_ARM)/,$(notdir $(SOURCES:.c=.o)))
 
 OBJECTS_CROSS = $(addprefix $(BUILD_DIR_CROSS)/,$(notdir $(SOURCES:.c=.o)))
 OBJECTS_CROSS += $(addprefix $(BUILD_DIR_CROSS)/,$(notdir $(TESTS:.cpp=.o)))

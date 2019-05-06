@@ -70,6 +70,11 @@ EXPORT HAL_StatusTypeDef HAL_SPI_Receive_DMA(SPI_HandleTypeDef *hspi, uint8_t *p
   return HAL_SPI_Receive(hspi, pData, Size, 0);
 }
 
+EXPORT HAL_StatusTypeDef HAL_SPI_Transmit_DMA(SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size)
+{
+  return HAL_SPI_Transmit(hspi, pData, Size, 0);
+}
+
 // I2C mock interface: check history / schedule data to be received
 string I2C_get_transmit_history_entry(size_t index)
 {

@@ -470,6 +470,7 @@ static uint8_t lora_send_packet_base(lora_sx1276 *lora, uint8_t *data, uint8_t d
 
   // Put radio in TX mode - packet will be transmitted ASAP
   set_mode(lora, OPMODE_TX);
+  return LORA_OK;
 }
 
 uint8_t lora_send_packet(lora_sx1276 *lora, uint8_t *data, uint8_t data_len)
