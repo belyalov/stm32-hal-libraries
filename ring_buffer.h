@@ -4,12 +4,8 @@
 #ifndef __RING_BUFFER_H
 #define __RING_BUFFER_H
 
-// Defines and initializes ring buffer structure.
-// Params:
-//  - _name: variable name to be created
-//  - _item: ring buffer item type
-//  - _size: ring size (items count)
-#define RING_BUFFER_DEFINE_INIT(_name, _item, _size)  \
+// Declares ring buffer structure
+#define RING_BUFFER_DECLARE(_name, _item, _size)      \
     struct _name##_ring {                             \
         size_t head;                                  \
         size_t tail;                                  \
@@ -17,7 +13,15 @@
         uint8_t full;                                 \
         _item buffer[_size];                          \
     };                                                \
-    struct _name##_ring _name = {0, 0, _size, 0};
+    extern struct _name##_ring *_name;
+// Defines and initializes ring buffer structure.
+// Params:
+//  - _name: variable name to be created
+//  - _item: ring buffer item type
+//  - _size: ring size (items count)
+#define RING_BUFFER_DEFINE(_name, _item, _size)              \
+    struct _name##_ring _name##_ring_def = {0, 0, _size, 0}; \
+    struct _name##_ring *_name = &_name##_ring_def;
 
 // Pushes "_item" into ring buffer (does memcpy)
 #define RING_BUFFER_PUSH_COPY(_name, _item)                                 \
