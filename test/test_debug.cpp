@@ -53,10 +53,13 @@ TEST(debug, uint_to_hex)
     {0xff, "ff"},
     {0xfafa, "fafa"},
     {0xaaff, "aaff"},
+    {0xaabbccdd, "aabbccdd"},
+    {0xaabbccddeeff, "aabbccddeeff"},
+    {0x3138470531383135, "3138470531383135"},
   };
 
   // Buffer for conversion
-  uint8_t buf[12] = {};
+  uint8_t buf[17] = {};
 
   for (auto it = runs.begin(); it != runs.end(); ++it) {
     uint8_t *res = debug_uint64_to_hexstring(it->first, buf, sizeof(buf));
