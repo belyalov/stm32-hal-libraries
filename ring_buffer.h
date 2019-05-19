@@ -13,7 +13,6 @@
         uint8_t full;                                 \
         _item buffer[_size];                          \
     };                                                \
-    extern struct _name##_ring *_name;
 // Defines and initializes ring buffer structure.
 // Params:
 //  - _name: variable name to be created
