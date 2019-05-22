@@ -52,7 +52,7 @@ out:
 // Helper to read and convert temperature into uint format
 static uint32_t _read_and_convert_temperature(I2C_HandleTypeDef *hi2c)
 {
-  int res = HAL_I2C_Master_Receive(hi2c, SI7021_ADDRESS_READ, si7021_buf, 3, 100);
+  int res = HAL_I2C_Master_Receive(hi2c, SI7021_ADDRESS_READ, si7021_buf, 2, 100);
 
   if (res != HAL_OK) {
     return SI7021_MEASURE_FAILED;
@@ -105,7 +105,7 @@ uint32_t si7021_measure_humidity(I2C_HandleTypeDef *hi2c)
   HAL_Delay(30);
 
   // Read result
-  res = HAL_I2C_Master_Receive(hi2c, SI7021_ADDRESS_READ, si7021_buf, 3, 100);
+  res = HAL_I2C_Master_Receive(hi2c, SI7021_ADDRESS_READ, si7021_buf, 2, 100);
   if (res != HAL_OK) {
     return SI7021_MEASURE_FAILED;
   }
