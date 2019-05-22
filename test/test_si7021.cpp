@@ -36,9 +36,9 @@ TEST_F(si7021, temperature)
   // 0x66 0x9c -> 23.58 C
   // 0x0f 0xff -> -35.02 C
   // Third byte is CRC which is not used yet
-  I2C_queue_receive_data(string("\x66\x9c\x00", 3));
-  I2C_queue_receive_data(string("\x0f\xff\x00", 3));
-  I2C_queue_receive_data(string("\x66\x9c\x00", 3));
+  I2C_queue_receive_data(string("\x66\x9c", 2));
+  I2C_queue_receive_data(string("\x0f\xff", 2));
+  I2C_queue_receive_data(string("\x66\x9c", 2));
 
   // Run test
   auto res1 = si7021_measure_temperature(&i2c);
@@ -62,7 +62,7 @@ TEST_F(si7021, humidity)
   // Setup I2C data to be received by si7021
   // 0x6c 0xb6 -> 47 humidity
   // Third byte is CRC which is not used yet
-  I2C_queue_receive_data(string("\x6c\xb6\x00", 3));
+  I2C_queue_receive_data(string("\x6c\xb6", 2));
 
   // Run test
   auto res = si7021_measure_humidity(&i2c);
