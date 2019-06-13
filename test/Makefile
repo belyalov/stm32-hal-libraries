@@ -12,7 +12,8 @@ TEST_DIR := .
 SOURCES = \
 	$(SOURCE_DIR)/lora_sx1276.c \
 	$(SOURCE_DIR)/debug.c \
-	$(SOURCE_DIR)/si7021.c
+	$(SOURCE_DIR)/si7021.c \
+	$(SOURCE_DIR)/veml6030.c
 
 HEADERS = \
 	$(SOURCE_DIR)/debug.h \
