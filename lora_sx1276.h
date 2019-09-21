@@ -6,6 +6,8 @@
 
 #include "main.h"
 
+#define LORA_MAX_PACKET_SIZE               128
+
 // Operational frequency
 #define MHZ                                1000000LLU
 #define LORA_BASE_FREQUENCY_US             (915LLU*MHZ)
