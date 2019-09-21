@@ -294,5 +294,12 @@ uint8_t  lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_
 void     lora_set_rx_symbol_timeout(lora_sx1276 *lora, uint16_t symbols);
 
 
+// Enables interrupt on DIO0 when packet received
+// SX1276 module will pull DIO0 line high
+void     lora_enable_interrupt_rx_done(lora_sx1276 *lora);
+
+// Enables interrupt on DIO0 when transmission is done
+// SX1276 module will pull DIO0 line high
+void     lora_enable_interrupt_tx_done(lora_sx1276 *lora);
 
 #endif

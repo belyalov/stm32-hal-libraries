@@ -134,6 +134,15 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
    Set "explicit", i.e. always add packet header with various system information.
    Refer to section 4.1.1.6 of datasheet
 
+ * `void lora_enable_interrupt_rx_done(lora_sx1276 *lora)`
+   Enables interrupt on DIO0 when packet received
+   SX1276 module will pull DIO0 line high
+
+ * `void lora_enable_interrupt_tx_done(lora_sx1276 *lora)`
+   Enables interrupt on DIO0 when transmission is done
+   SX1276 module will pull DIO0 line high
+
+void     lora_enable_interrupt_tx_done(lora_sx1276 *lora);
 
 ### Received packet information
 
