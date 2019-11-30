@@ -11,9 +11,12 @@
 // LoRa PB errors
 #define LORA_PB_OK                           LORA_OK
 #define LORA_PB_SERIALIZE_FAILED             32
-#define LORA_PB_ENCODE_FAILED                33
-#define LORA_PB_TOO_LONG                     34
-#define LORA_PB_AES_INIT_FAILED              35
+#define LORA_PB_DESERIALIZE_FAILED           33
+#define LORA_PB_ENCODE_FAILED                34
+#define LORA_PB_DECODE_FAILED                35
+#define LORA_PB_TOO_LONG                     36
+#define LORA_PB_AES_INIT_FAILED              37
+#define LORA_PB_INVALID_PACKET               38
 
 // Timeout for blocking calls: AES encrypt/decrypt / LoRa send
 #ifndef LORA_PB_TIMEOUT
@@ -29,6 +32,10 @@
 // [0-7: device_id] [8-24: AES_IV] [25-...: Serialized protobuf]
 uint32_t lora_pb_encode_and_send_blocking(lora_sx1276 *lora,
                                           uint8_t *aes_key, const uint64_t device_id,
-                                          const pb_msgdesc_t *fields, const void *pb);
+                                          const pb_msgdesc_t *pb_fields, const void *pb_struct);
+
+uint32_t lora_pb_receive_and_decode_blocking(lora_sx1276 *lora,
+                                             uint8_t *aes_key, uint64_t *device_id,
+                                             const pb_msgdesc_t *pb_fields, void *pb_struct);
 
 #endif
