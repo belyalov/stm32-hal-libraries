@@ -21,12 +21,11 @@
 #define SI7021_READ_ID2               0xFCC9 // Read Electronic ID 2nd Byte
 #define SI7021_FIRMWARE_VERSION       0x84B8 // Read Firmware Revision
 
-static uint8_t si7021_buf[4];
-
 // Helper to read 2 bytes of device ID
 static uint32_t _read_id(I2C_HandleTypeDef *hi2c, uint32_t reg)
 {
   uint32_t id = 0;
+  uint8_t si7021_buf[4];
 
   si7021_buf[0] = reg >> 8;
   si7021_buf[1] = reg & 0xff;
@@ -52,6 +51,7 @@ out:
 // Helper to read and convert temperature into uint format
 static uint32_t _read_and_convert_temperature(I2C_HandleTypeDef *hi2c)
 {
+  uint8_t si7021_buf[4];
   int res = HAL_I2C_Master_Receive(hi2c, SI7021_ADDRESS_READ, si7021_buf, 2, 100);
 
   if (res != HAL_OK) {
@@ -79,6 +79,7 @@ uint64_t si7021_read_id(I2C_HandleTypeDef *hi2c)
 
 uint32_t si7021_set_config(I2C_HandleTypeDef *hi2c, uint8_t heater, uint8_t resolution)
 {
+  uint8_t si7021_buf[4];
   si7021_buf[0] = SI7021_WRITE_USER_REG1;
   si7021_buf[1] = heater | resolution;
 
@@ -87,6 +88,7 @@ uint32_t si7021_set_config(I2C_HandleTypeDef *hi2c, uint8_t heater, uint8_t reso
 
 uint32_t si7021_set_heater_power(I2C_HandleTypeDef *hi2c, uint8_t power)
 {
+  uint8_t si7021_buf[4];
   si7021_buf[0] = SI7021_WRITE_HEATER_REG;
   si7021_buf[1] = power;
 
@@ -95,6 +97,7 @@ uint32_t si7021_set_heater_power(I2C_HandleTypeDef *hi2c, uint8_t power)
 
 uint32_t si7021_measure_humidity(I2C_HandleTypeDef *hi2c)
 {
+  uint8_t si7021_buf[4];
   si7021_buf[0] = SI7021_MEASURE_NOHOLD;
 
   // Start measure
@@ -115,6 +118,7 @@ uint32_t si7021_measure_humidity(I2C_HandleTypeDef *hi2c)
 
 int32_t si7021_measure_temperature(I2C_HandleTypeDef *hi2c)
 {
+  uint8_t si7021_buf[4];
   si7021_buf[0] = SI7021_MEASURE_TEMP_NOHOLD;
 
   int res = HAL_I2C_Master_Transmit(hi2c, SI7021_ADDRESS_WRITE, &si7021_buf[0], 1, 100);
@@ -128,6 +132,7 @@ int32_t si7021_measure_temperature(I2C_HandleTypeDef *hi2c)
 
 int32_t si7021_read_previous_temperature(I2C_HandleTypeDef *hi2c)
 {
+  uint8_t si7021_buf[4];
   si7021_buf[0] = SI7021_READ_PREV_TEMP;
 
   int res = HAL_I2C_Master_Transmit(hi2c, SI7021_ADDRESS_WRITE, &si7021_buf[0], 1, 100);
