@@ -28,7 +28,7 @@
 #define SI7021_HEATER_POWER_94MA         0xf
 
 // In case of something went wrong...
-#define SI7021_MEASURE_FAILED            1024
+#define SI7021_MEASURE_FAILED            0xFFFF
 
 #ifdef __cplusplus
 #define EXPORT extern "C"
