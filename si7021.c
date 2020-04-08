@@ -49,7 +49,7 @@ out:
 }
 
 // Helper to read and convert temperature into uint format
-static uint32_t _read_and_convert_temperature(I2C_HandleTypeDef *hi2c)
+static int32_t _read_and_convert_temperature(I2C_HandleTypeDef *hi2c)
 {
   uint8_t si7021_buf[4];
   int res = HAL_I2C_Master_Receive(hi2c, SI7021_ADDRESS_READ, si7021_buf, 2, 100);
@@ -58,11 +58,14 @@ static uint32_t _read_and_convert_temperature(I2C_HandleTypeDef *hi2c)
     return SI7021_MEASURE_FAILED;
   }
 
-  double raw = (double)(si7021_buf[0] << 8 | si7021_buf[1]) * 175.72 / 65536 - 46.85;
-  uint32_t t1 = raw;
-  uint32_t t2 = (raw - t1) * 100;
+  int64_t temp_code = (si7021_buf[0] << 8 | si7021_buf[1]) * 100;
+  int64_t temp = 17572 * temp_code / 6553500 - 4685;
 
-  return (t1 * 100) + t2;
+  if (temp > 12500 || temp < -4000) {
+    return SI7021_MEASURE_FAILED;
+  }
+
+  return (int32_t)temp;
 }
 
 uint64_t si7021_read_id(I2C_HandleTypeDef *hi2c)

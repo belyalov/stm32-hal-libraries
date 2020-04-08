@@ -34,7 +34,7 @@ TEST_F(si7021, temperature)
 {
   // Setup I2C data to be received by si7021
   // 0x66 0x9c -> 23.58 C
-  // 0x0f 0xff -> -35.02 C
+  // 0x0f 0xff -> -35.88 C
   // Third byte is CRC which is not used yet
   I2C_queue_receive_data(string("\x66\x9c", 2));
   I2C_queue_receive_data(string("\x0f\xff", 2));
@@ -44,7 +44,7 @@ TEST_F(si7021, temperature)
   auto res1 = si7021_measure_temperature(&i2c);
   auto res2 = si7021_measure_temperature(&i2c);
   ASSERT_EQ(2358, res1);
-  ASSERT_EQ(-3587, res2);
+  ASSERT_EQ(-3588, res2);
 
   // One more variation - read temperature that has been measured by
   // measure humidity call
