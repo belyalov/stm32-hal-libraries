@@ -7,6 +7,7 @@ Set of useful high quality libraries to make interaction with various hardware /
 - [VEML6030 ambient light](https://github.com/belyalov/stm32-hal-libraries/blob/master/doc/veml6030.md) high precision Ambient Light I2C sensor.
 - **Debug** - tiny size helpers to print text / values through UART
 - **Ring Buffer** - simple set of macros to work with ring (circular) buffer. In favour of \*nix `queue.h`.
+- **Printf** - basic printf() redirector to hUARTx
 
 ## Usage
 - Super simple way: just copy required files into your STM32 HAL project.. that's it!
