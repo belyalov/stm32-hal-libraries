@@ -8,6 +8,8 @@ BUILD_DIR_CROSS = build_cross
 
 SOURCE_DIR := ..
 TEST_DIR := .
+PROTO_DIR := proto
+NANOPB_DIR := ../nanopb
 
 SOURCES = \
 	$(SOURCE_DIR)/lora_sx1276.c \
@@ -32,12 +34,21 @@ TESTS = \
 	$(TEST_DIR)/test_ring_nanopb.cpp \
 	$(TEST_DIR)/test_utils.cpp
 
+PROTO = \
+	$(PROTO_DIR)/sample.pb.c
+
+NANOPB = \
+	$(NANOPB_DIR)/pb_encode.c \
+	$(NANOPB_DIR)/pb_decode.c \
+	$(NANOPB_DIR)/pb_common.c
+
+
 ARM_CC = arm-none-eabi-gcc
 CROSS_CC = gcc
 CROSS_CXX = g++
 GTEST_LIBS = /usr/local/lib/libgtest_main.a /usr/local/lib/libgtest.a -lpthread
 
-INCLUDES = -I../ -I. -I../nanopb -Iproto
+INCLUDES = -I../ -I. -I../nanopb
 
 ARM_CFLAGS = -mthumb -Wall -Werror $(INCLUDES)
 CROSS_CFLAGS = -Wall $(INCLUDES) -I/usr/local/include -I/usr/include -Wno-missing-braces
@@ -47,6 +58,8 @@ OBJECTS_ARM += $(addprefix $(BUILD_DIR_ARM)/,$(notdir $(SOURCES:.c=.o)))
 
 OBJECTS_CROSS = $(addprefix $(BUILD_DIR_CROSS)/,$(notdir $(SOURCES:.c=.o)))
 OBJECTS_CROSS += $(addprefix $(BUILD_DIR_CROSS)/,$(notdir $(TESTS:.cpp=.o)))
+OBJECTS_CROSS += $(addprefix $(BUILD_DIR_CROSS)/nanopb_,$(notdir $(NANOPB:.c=.o)))
+OBJECTS_CROSS += $(addprefix $(BUILD_DIR_CROSS)/proto_,$(notdir $(PROTO:.c=.o)))
 
 ARM_BINARY := $(BUILD_DIR_ARM)/utils.elf
 TESTS_BINARY := $(BUILD_DIR_CROSS)/tests
@@ -69,6 +82,12 @@ $(ARM_BINARY): $(OBJECTS_ARM) dirs
 # Cross compiled / tests
 $(BUILD_DIR_CROSS)/%.o: $(TEST_DIR)/%.cpp
 	$(CROSS_CXX) -std=c++11 $(CROSS_CFLAGS) -c $^ -o $@
+
+$(BUILD_DIR_CROSS)/proto_%.o: $(PROTO_DIR)/%.c
+	$(CROSS_CC) $(CROSS_CFLAGS) -c $^ -o $@
+
+$(BUILD_DIR_CROSS)/nanopb_%.o: $(NANOPB_DIR)/%.c
+	$(CROSS_CC) $(CROSS_CFLAGS) -c $^ -o $@
 
 $(BUILD_DIR_CROSS)/%.o: $(SOURCE_DIR)/%.c
 	$(CROSS_CC) $(CROSS_CFLAGS) -c $^ -o $@

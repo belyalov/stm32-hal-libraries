@@ -1,0 +1,14 @@
+syntax = "proto3";
+package protobufs;
+
+message Test {
+    uint32  foo = 1;
+    fixed32 bar = 2;
+    bool    baz = 3;
+    SubTest sub = 4;
+}
+
+message SubTest {
+    uint32 sub_foo = 1;
+    fixed64 sub_bar = 2;
+}

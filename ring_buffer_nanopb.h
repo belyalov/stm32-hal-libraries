@@ -4,6 +4,7 @@
 #ifndef __RING_BUFFER_NANOPB_H
 #define __RING_BUFFER_NANOPB_H
 
+#include <pb_encode.h>
 #include <pb_decode.h>
 
 #ifdef __cplusplus
@@ -19,7 +20,9 @@ struct ring_buffer_metadata {
   uint32_t size;
 };
 
+EXPORT pb_ostream_t pb_ostream_from_ring_buffer(struct ring_buffer_metadata* meta);
 EXPORT pb_istream_t pb_istream_from_ring_buffer(struct ring_buffer_metadata* meta, size_t msglen);
-EXPORT size_t       ring_buffer_metadata_get_length(struct ring_buffer_metadata* meta);
+EXPORT size_t       ring_buffer_metadata_used(struct ring_buffer_metadata* meta);
+EXPORT size_t       ring_buffer_metadata_free(struct ring_buffer_metadata* meta);
 
 #endif
