@@ -13,12 +13,14 @@ SOURCES = \
 	$(SOURCE_DIR)/lora_sx1276.c \
 	$(SOURCE_DIR)/debug.c \
 	$(SOURCE_DIR)/si7021.c \
+	$(SOURCE_DIR)/ring_buffer_nanopb.c \
 	$(SOURCE_DIR)/veml6030.c
 
 HEADERS = \
 	$(SOURCE_DIR)/debug.h \
 	$(SOURCE_DIR)/lora_sx1276.h \
 	$(SOURCE_DIR)/ring_buffer.h \
+	$(SOURCE_DIR)/ring_buffer_nanopb.h \
 	$(SOURCE_DIR)/si7021.h \
 	$(SOURCE_DIR)/utils.h
 
@@ -27,6 +29,7 @@ TESTS = \
 	$(TEST_DIR)/test_debug.cpp \
 	$(TEST_DIR)/test_si7021.cpp \
 	$(TEST_DIR)/test_ring.cpp \
+	$(TEST_DIR)/test_ring_nanopb.cpp \
 	$(TEST_DIR)/test_utils.cpp
 
 ARM_CC = arm-none-eabi-gcc
@@ -34,10 +37,10 @@ CROSS_CC = gcc
 CROSS_CXX = g++
 GTEST_LIBS = /usr/local/lib/libgtest_main.a /usr/local/lib/libgtest.a -lpthread
 
-INCLUDES = -I../ -I.
+INCLUDES = -I../ -I. -I../nanopb -Iproto
 
 ARM_CFLAGS = -mthumb -Wall -Werror $(INCLUDES)
-CROSS_CFLAGS = -Wall $(INCLUDES) -I/usr/local/include -I/usr/include
+CROSS_CFLAGS = -Wall $(INCLUDES) -I/usr/local/include -I/usr/include -Wno-missing-braces
 
 OBJECTS_ARM := $(BUILD_DIR_ARM)/main_arm.o
 OBJECTS_ARM += $(addprefix $(BUILD_DIR_ARM)/,$(notdir $(SOURCES:.c=.o)))
@@ -50,6 +53,9 @@ TESTS_BINARY := $(BUILD_DIR_CROSS)/tests
 
 all: $(ARM_BINARY) $(TESTS_BINARY) Makefile
 
+dirs:
+	mkdir -p $(BUILD_DIR_ARM) $(BUILD_DIR_CROSS)
+
 # ARM native target
 $(BUILD_DIR_ARM)/%.o: $(SOURCE_DIR)/%.c
 	$(ARM_CC) $(ARM_CFLAGS) -c $^ -o $@
@@ -57,7 +63,7 @@ $(BUILD_DIR_ARM)/%.o: $(SOURCE_DIR)/%.c
 $(BUILD_DIR_ARM)/%.o: %.c
 	$(ARM_CC) $(ARM_CFLAGS) -c $^ -o $@
 
-$(ARM_BINARY): $(OBJECTS_ARM)
+$(ARM_BINARY): $(OBJECTS_ARM) dirs
 	$(ARM_CC) --specs=nosys.specs $(OBJECTS_ARM) -o $@
 
 # Cross compiled / tests
@@ -67,7 +73,7 @@ $(BUILD_DIR_CROSS)/%.o: $(TEST_DIR)/%.cpp
 $(BUILD_DIR_CROSS)/%.o: $(SOURCE_DIR)/%.c
 	$(CROSS_CC) $(CROSS_CFLAGS) -c $^ -o $@
 
-$(TESTS_BINARY): $(OBJECTS_CROSS) $(HEADERS) Makefile
+$(TESTS_BINARY): $(OBJECTS_CROSS) $(HEADERS) Makefile dirs
 	$(CROSS_CXX) $(GTEST_LIBS) $(OBJECTS_CROSS) -o $@
 
 test: $(TESTS_BINARY)
