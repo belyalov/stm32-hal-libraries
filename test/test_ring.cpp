@@ -19,6 +19,8 @@ TEST(ring_buffer, push_pop_simple)
   RING_BUFFER_DEFINE(rbuf, struct item, 10);
   // Ensure that it is empty :)
   ASSERT_TRUE(RING_BUFFER_EMPTY(rbuf));
+  // Size initialized correctly
+  ASSERT_EQ(rbuf->size, 10);
 
   // Push item using PUSH_COPY
   struct item item1 = {33, 44};

@@ -7,11 +7,11 @@
 // Declares ring buffer structure
 #define RING_BUFFER_DECLARE(_name, _item, _size)      \
     struct _name##_ring {                             \
+        _item buffer[_size];                          \
         size_t head;                                  \
         size_t tail;                                  \
         size_t size;                                  \
         uint8_t full;                                 \
-        _item buffer[_size];                          \
     };                                                \
 // Defines and initializes ring buffer structure.
 // Params:
@@ -19,7 +19,7 @@
 //  - _item: ring buffer item type
 //  - _size: ring size (items count)
 #define RING_BUFFER_DEFINE(_name, _item, _size)              \
-    struct _name##_ring _name##_ring_def = {0, 0, _size, 0}; \
+    struct _name##_ring _name##_ring_def = {{0}, 0, 0, _size}; \
     struct _name##_ring *_name = &_name##_ring_def;
 
 // Pushes "_item" into ring buffer (does memcpy)
