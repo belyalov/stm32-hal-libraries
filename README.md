@@ -7,6 +7,7 @@ Set of useful high quality libraries to make interaction with various hardware /
 - [VEML6030 ambient light](https://github.com/belyalov/stm32-hal-libraries/blob/master/doc/veml6030.md) high precision Ambient Light I2C sensor.
 - **Debug** - tiny size helpers to print text / values through UART
 - **Ring Buffer** - simple set of macros to work with ring (circular) buffer. In favour of \*nix `queue.h`.
+- **NanoPB Ring Buffer streams** - ring buffer based input/output streams for nanopb.
 - **Printf** - basic printf() redirector to hUARTx
 
 ## Usage
