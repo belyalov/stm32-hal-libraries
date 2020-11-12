@@ -9,7 +9,7 @@ BUILD_DIR_CROSS = build_cross
 SOURCE_DIR := ..
 TEST_DIR := .
 PROTO_DIR := proto
-NANOPB_DIR := ../nanopb
+NANOPB_DIR := nanopb
 
 SOURCES = \
 	$(SOURCE_DIR)/lora_sx1276.c \
@@ -48,7 +48,7 @@ CROSS_CC = gcc
 CROSS_CXX = g++
 GTEST_LIBS = /usr/local/lib/libgtest_main.a /usr/local/lib/libgtest.a -lpthread
 
-INCLUDES = -I../ -I. -I../nanopb
+INCLUDES = -I../ -I. -Inanopb
 
 ARM_CFLAGS = -mthumb -Wall -Werror $(INCLUDES)
 CROSS_CFLAGS = -Wall $(INCLUDES) -I/usr/local/include -I/usr/include -Wno-missing-braces
