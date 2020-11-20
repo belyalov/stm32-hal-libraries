@@ -16,8 +16,23 @@
 #define EXPORT
 #endif
 
+// Convenient macros to use DEBUG_UART to send debug messages to
+#ifdef DEBUG_UART
+extern UART_HandleTypeDef DEBUG_UART;
+#define DEBUG(s)                   debug_print_str(&DEBUG_UART, s)
+#define DEBUGLN(s)                 debug_print_strln(&DEBUG_UART, s)
+#define DEBUG_STR_LN(s1, s2)       debug_print_strstrln(&DEBUG_UART, s1, s2)
+#define DEBUG_UINT(s, v)           debug_print_uint64(&DEBUG_UART, s, v)
+#define DEBUG_UINT_LN(s, v)        debug_print_uint64ln(&DEBUG_UART, s, v)
+#define DEBUG_INT(s, v)            debug_print_int64(&DEBUG_UART, s, v)
+#define DEBUG_INT_LN(s, v)         debug_print_int64ln(&DEBUG_UART, s, v)
+#define DEBUG_UINT_HEX(s, v)       debug_print_hex64(&DEBUG_UART, s, v)
+#define DEBUG_UINT_HEXLN(s, v)     debug_print_hex64ln(&DEBUG_UART, s, v)
+#endif
+
 EXPORT void debug_print_str(UART_HandleTypeDef *uart, const char *msg);
 EXPORT void debug_print_strln(UART_HandleTypeDef *uart, const char *msg);
+EXPORT void debug_print_strstrln(UART_HandleTypeDef *uart, const char *msg1, const char *msg2);
 EXPORT void debug_print_uint64(UART_HandleTypeDef *uart, const char *msg, uint64_t val);
 EXPORT void debug_print_uint64ln(UART_HandleTypeDef *uart, const char *msg, uint64_t val);
 EXPORT void debug_print_int64(UART_HandleTypeDef *uart, const char *msg, int64_t val);

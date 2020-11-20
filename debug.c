@@ -124,3 +124,10 @@ void debug_print_hex64ln(UART_HandleTypeDef *uart, const char *msg, uint64_t val
     HAL_UART_Transmit(uart, sval, strlen((char*)sval), DEBUG_UART_TIMEOUT);
     HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);
 }
+
+void debug_print_strstrln(UART_HandleTypeDef *uart, const char *msg1, const char *msg2)
+{
+    HAL_UART_Transmit(uart, (uint8_t*)msg1, strlen(msg1), DEBUG_UART_TIMEOUT);
+    HAL_UART_Transmit(uart, (uint8_t*)msg2, strlen(msg2), DEBUG_UART_TIMEOUT);
+    HAL_UART_Transmit(uart, (uint8_t*)"\r\n", 2, DEBUG_UART_TIMEOUT);
+}
