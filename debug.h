@@ -19,15 +19,24 @@
 // Convenient macros to use DEBUG_UART to send debug messages to
 #ifdef DEBUG_UART
 extern UART_HandleTypeDef DEBUG_UART;
-#define DEBUG(s)                   debug_print_str(&DEBUG_UART, s)
-#define DEBUGLN(s)                 debug_print_strln(&DEBUG_UART, s)
-#define DEBUG_STR_LN(s1, s2)       debug_print_strstrln(&DEBUG_UART, s1, s2)
-#define DEBUG_UINT(s, v)           debug_print_uint64(&DEBUG_UART, s, v)
-#define DEBUG_UINT_LN(s, v)        debug_print_uint64ln(&DEBUG_UART, s, v)
-#define DEBUG_INT(s, v)            debug_print_int64(&DEBUG_UART, s, v)
-#define DEBUG_INT_LN(s, v)         debug_print_int64ln(&DEBUG_UART, s, v)
-#define DEBUG_UINT_HEX(s, v)       debug_print_hex64(&DEBUG_UART, s, v)
-#define DEBUG_UINT_HEXLN(s, v)     debug_print_hex64ln(&DEBUG_UART, s, v)
+#ifdef DEBUG_SEM
+#include "cmsis_os.h"
+extern osSemaphoreId DEBUG_SEM;
+#define DEBUG_UART_LOCK    osSemaphoreWait(DEBUG_SEM, osWaitForever)
+#define DEBUG_UART_UNLOCK  osSemaphoreRelease(DEBUG_SEM)
+#else
+#define DEBUG_UART_LOCK
+#define DEBUG_UART_UNLOCK
+#endif
+#define DEBUG(s)                   DEBUG_UART_LOCK; debug_print_str(&DEBUG_UART, s); DEBUG_UART_UNLOCK;
+#define DEBUGLN(s)                 DEBUG_UART_LOCK; debug_print_strln(&DEBUG_UART, s); DEBUG_UART_UNLOCK;
+#define DEBUG_STR_LN(s1, s2)       DEBUG_UART_LOCK; debug_print_strstrln(&DEBUG_UART, s1, s2); DEBUG_UART_UNLOCK;
+#define DEBUG_UINT(s, v)           DEBUG_UART_LOCK; debug_print_uint64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
+#define DEBUG_UINT_LN(s, v)        DEBUG_UART_LOCK; debug_print_uint64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
+#define DEBUG_INT(s, v)            DEBUG_UART_LOCK; debug_print_int64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
+#define DEBUG_INT_LN(s, v)         DEBUG_UART_LOCK; debug_print_int64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
+#define DEBUG_UINT_HEX(s, v)       DEBUG_UART_LOCK; debug_print_hex64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
+#define DEBUG_UINT_HEXLN(s, v)     DEBUG_UART_LOCK; debug_print_hex64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
 #endif
 
 EXPORT void debug_print_str(UART_HandleTypeDef *uart, const char *msg);
