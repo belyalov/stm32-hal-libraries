@@ -24,5 +24,7 @@ EXPORT pb_ostream_t pb_ostream_from_ring_buffer(struct ring_buffer_metadata* met
 EXPORT pb_istream_t pb_istream_from_ring_buffer(struct ring_buffer_metadata* meta, size_t msglen);
 EXPORT size_t       ring_buffer_metadata_used(struct ring_buffer_metadata* meta);
 EXPORT size_t       ring_buffer_metadata_free(struct ring_buffer_metadata* meta);
+EXPORT void         ring_buffer_advance_tail(struct ring_buffer_metadata* meta, size_t len);
+EXPORT void         ring_buffer_advance_head(struct ring_buffer_metadata* meta, size_t len);
 
 #endif

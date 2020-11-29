@@ -15,6 +15,12 @@ TEST(ring_buffer_nanopb, setters_getters) {
   struct ring_buffer_metadata meta = {};
   meta.size = 10;
 
+  // No data
+  meta.tail = 5;
+  meta.head = 5;
+  ASSERT_EQ(ring_buffer_metadata_used(&meta), 0);
+  ASSERT_EQ(ring_buffer_metadata_free(&meta), 10);
+
   // Emulate that buffer just got 2 bytes
   // **--------
   // T H
@@ -42,6 +48,22 @@ TEST(ring_buffer_nanopb, setters_getters) {
   meta.head = 2;
   ASSERT_EQ(ring_buffer_metadata_used(&meta), 8);
   ASSERT_EQ(ring_buffer_metadata_free(&meta), 2);
+
+  // Advance tail
+  meta.tail = 0;
+  meta.head = 0;
+  ring_buffer_advance_tail(&meta, 5);
+  ASSERT_EQ(meta.tail, 5);
+  ring_buffer_advance_tail(&meta, 5);
+  ASSERT_EQ(meta.tail, 0);
+
+  // Advance head
+  meta.tail = 0;
+  meta.head = 0;
+  ring_buffer_advance_head(&meta, 5);
+  ASSERT_EQ(meta.head, 5);
+  ring_buffer_advance_head(&meta, 5);
+  ASSERT_EQ(meta.head, 0);
 }
 
 TEST(ring_buffer_nanopb, read_callback)

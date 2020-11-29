@@ -101,3 +101,13 @@ pb_ostream_t pb_ostream_from_ring_buffer(struct ring_buffer_metadata* meta)
 
   return stream;
 }
+
+void ring_buffer_advance_tail(struct ring_buffer_metadata* meta, size_t len)
+{
+  meta->tail = (meta->tail + len) % meta->size;
+}
+
+void ring_buffer_advance_head(struct ring_buffer_metadata* meta, size_t len)
+{
+  meta->head = (meta->head + len) % meta->size;
+}
