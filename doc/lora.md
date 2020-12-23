@@ -46,7 +46,7 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
   // Receive buffer
   uint8_t buffer[32];
   // Put LoRa modem into continuous receive mode
-  lora_mode_receive_continious(&lora);
+  lora_mode_receive_continuous(&lora);
   // Wait for packet up to 10sec
   uint8_t res;
   uint8_t len = lora_receive_packet_blocking(&lora, buffer, sizeof(buffer), 10000, &res);
@@ -84,7 +84,7 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
  * `void lora_mode_standby(lora_sx1276 *lora)`
    Put radio into standby (idle) mode: Both Crystal Oscillator and LoRa baseband blocks are turned on. RF part and PLLs are disabled.
 
- * `void lora_mode_receive_continious(lora_sx1276 *lora)`
+ * `void lora_mode_receive_continuous(lora_sx1276 *lora)`
    Put radio into continuous receive mode: When activated the RFM95/96/97/98(W) powers all remaining blocks required for reception, processing all received data until a new user request is made to change operating mode.
 
  * `void lora_mode_receive_single(lora_sx1276 *lora)`

@@ -109,7 +109,7 @@ void     lora_mode_standby(lora_sx1276 *lora);
 // Put radio into continuous receive mode:
 // When activated the RFM95/96/97/98(W) powers all remaining blocks required for reception,
 // processing all received data until a new user request is made to change operating mode.
-void     lora_mode_receive_continious(lora_sx1276 *lora);
+void     lora_mode_receive_continuous(lora_sx1276 *lora);
 
 // Put radio into single receive mode:
 // When activated the RFM95/96/97/98(W) powers all remaining blocks required for reception, remains in

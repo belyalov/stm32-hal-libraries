@@ -225,7 +225,7 @@ void lora_mode_sleep(lora_sx1276 *lora)
   set_mode(lora, OPMODE_SLEEP);
 }
 
-void lora_mode_receive_continious(lora_sx1276 *lora)
+void lora_mode_receive_continuous(lora_sx1276 *lora)
 {
   assert_param(lora);
 

@@ -16,9 +16,14 @@
 #define EXPORT
 #endif
 
-// Convenient macros to use DEBUG_UART to send debug messages to
+#ifndef DEBUG_BUFFER_SIZE
+#define DEBUG_BUFFER_SIZE 17
+#endif
+
+// Convenient macros to use uart defined in DEBUG_UART to send debug messages to
 #ifdef DEBUG_UART
 extern UART_HandleTypeDef DEBUG_UART;
+// Optional mutex when using with freertos
 #ifdef DEBUG_SEM
 #include "cmsis_os.h"
 extern osSemaphoreId DEBUG_SEM;
@@ -37,6 +42,14 @@ extern osSemaphoreId DEBUG_SEM;
 #define DEBUG_INT_LN(s, v)         DEBUG_UART_LOCK; debug_print_int64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
 #define DEBUG_UINT_HEX(s, v)       DEBUG_UART_LOCK; debug_print_hex64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
 #define DEBUG_UINT_HEXLN(s, v)     DEBUG_UART_LOCK; debug_print_hex64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
+// format based debug logger: uses snprintf() to serialize arguments. Adds around 2k to binary size
+#define DEBUGF(format, ...)                                                                        \
+  do {                                                                                             \
+    extern uint8_t* _stm32_hal_debug_buffer;                                                       \
+    uint8_t len = snprintf(_stm32_hal_debug_buffer, DEBUG_BUFFER_SIZE - 1, format, ##__VA_ARGS__); \
+    debug_buf[len] = 0;                                                                            \
+    DEBUG(debug_buf);                                                                              \
+  } while(0);
 #endif
 
 EXPORT void debug_print_str(UART_HandleTypeDef *uart, const char *msg);
