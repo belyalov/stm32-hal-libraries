@@ -304,4 +304,7 @@ void     lora_enable_interrupt_rx_done(lora_sx1276 *lora);
 // SX1276 module will pull DIO0 line high
 void     lora_enable_interrupt_tx_done(lora_sx1276 *lora);
 
+// Clears TX interrupt on DIO0
+void     lora_clear_interrupt_tx_done(lora_sx1276 *lora);
+
 #endif

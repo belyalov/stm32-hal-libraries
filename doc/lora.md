@@ -142,7 +142,8 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
    Enables interrupt on DIO0 when transmission is done
    SX1276 module will pull DIO0 line high
 
-void     lora_enable_interrupt_tx_done(lora_sx1276 *lora);
+ * `void lora_clear_interrupt_tx_done(lora_sx1276 *lora)`
+   Clears TX interrupt on DIO0
 
 ### Received packet information
 

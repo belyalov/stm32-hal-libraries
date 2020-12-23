@@ -455,7 +455,7 @@ static uint8_t lora_send_packet_base(lora_sx1276 *lora, uint8_t *data, uint8_t d
   set_mode(lora, OPMODE_STDBY);
 
   // Clear TX IRQ flag, to be sure
-  write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_TX_DONE);
+  lora_clear_interrupt_tx_done(lora);
 
   // Set FIFO pointer to the beginning of the buffer
   write_register(lora, REG_FIFO_ADDR_PTR, lora->tx_base_addr);
@@ -650,6 +650,11 @@ void lora_enable_interrupt_tx_done(lora_sx1276 *lora)
   // 01 -> (DIO0 tx_done)
   // DIO0 uses 6-7 bits of DIO_MAPPING_1
   write_register(lora, REG_DIO_MAPPING_1, 0x40);
+}
+
+void lora_clear_interrupt_tx_done(lora_sx1276 *lora)
+{
+  write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_TX_DONE);
 }
 
 uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
