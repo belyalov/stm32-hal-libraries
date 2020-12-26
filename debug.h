@@ -23,12 +23,12 @@
 // Convenient macros to use uart defined in DEBUG_UART to send debug messages to
 #ifdef DEBUG_UART
 extern UART_HandleTypeDef DEBUG_UART;
-// Optional mutex when using with freertos
-#ifdef DEBUG_SEM
+// Optional mutex when using with FreeRTOS
+#ifdef DEBUG_MUTEX
 #include "cmsis_os.h"
-extern osSemaphoreId DEBUG_SEM;
-#define DEBUG_UART_LOCK    osSemaphoreWait(DEBUG_SEM, osWaitForever)
-#define DEBUG_UART_UNLOCK  osSemaphoreRelease(DEBUG_SEM)
+extern SemaphoreHandle_t DEBUG_MUTEX;
+#define DEBUG_UART_LOCK    xSemaphoreTake(DEBUG_MUTEX, pdMS_TO_TICKS(256))
+#define DEBUG_UART_UNLOCK  xSemaphoreGive(DEBUG_MUTEX)
 #else
 #define DEBUG_UART_LOCK
 #define DEBUG_UART_UNLOCK
