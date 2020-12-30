@@ -42,6 +42,7 @@ extern SemaphoreHandle_t DEBUG_MUTEX;
 #define DEBUG_INT_LN(s, v)         DEBUG_UART_LOCK; debug_print_int64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
 #define DEBUG_UINT_HEX(s, v)       DEBUG_UART_LOCK; debug_print_hex64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
 #define DEBUG_UINT_HEXLN(s, v)     DEBUG_UART_LOCK; debug_print_hex64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
+#endif
 
 EXPORT void debug_print_str(UART_HandleTypeDef *uart, const char *msg);
 EXPORT void debug_print_strln(UART_HandleTypeDef *uart, const char *msg);
