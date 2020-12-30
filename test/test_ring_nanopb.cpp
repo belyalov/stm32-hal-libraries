@@ -18,51 +18,51 @@ TEST(ring_buffer_nanopb, setters_getters) {
   // No data
   meta.tail = 5;
   meta.head = 5;
-  ASSERT_EQ(ring_buffer_metadata_used(&meta), 0);
-  ASSERT_EQ(ring_buffer_metadata_free(&meta), 10);
+  ASSERT_EQ(pb_ring_buffer_metadata_used(&meta), 0);
+  ASSERT_EQ(pb_ring_buffer_metadata_free(&meta), 10);
 
   // Emulate that buffer just got 2 bytes
   // **--------
   // T H
   meta.tail = 0;
   meta.head = 2;
-  ASSERT_EQ(ring_buffer_metadata_used(&meta), 2);
-  ASSERT_EQ(ring_buffer_metadata_free(&meta), 8);
+  ASSERT_EQ(pb_ring_buffer_metadata_used(&meta), 2);
+  ASSERT_EQ(pb_ring_buffer_metadata_free(&meta), 8);
 
   // "Read" 2 bytes
   meta.tail = 2;
-  ASSERT_EQ(ring_buffer_metadata_used(&meta), 0);
-  ASSERT_EQ(ring_buffer_metadata_free(&meta), 10);
+  ASSERT_EQ(pb_ring_buffer_metadata_used(&meta), 0);
+  ASSERT_EQ(pb_ring_buffer_metadata_free(&meta), 10);
 
   // Right edge: last 8 bytes used, head rolled over
   // --********
   // H T
   meta.head = 0;
-  ASSERT_EQ(ring_buffer_metadata_used(&meta), 8);
-  ASSERT_EQ(ring_buffer_metadata_free(&meta), 2);
+  ASSERT_EQ(pb_ring_buffer_metadata_used(&meta), 8);
+  ASSERT_EQ(pb_ring_buffer_metadata_free(&meta), 2);
 
   // Rolled over buffer:
   // **--******
   //   H T
   meta.tail = 4;
   meta.head = 2;
-  ASSERT_EQ(ring_buffer_metadata_used(&meta), 8);
-  ASSERT_EQ(ring_buffer_metadata_free(&meta), 2);
+  ASSERT_EQ(pb_ring_buffer_metadata_used(&meta), 8);
+  ASSERT_EQ(pb_ring_buffer_metadata_free(&meta), 2);
 
   // Advance tail
   meta.tail = 0;
   meta.head = 0;
-  ring_buffer_advance_tail(&meta, 5);
+  pb_ring_buffer_advance_tail(&meta, 5);
   ASSERT_EQ(meta.tail, 5);
-  ring_buffer_advance_tail(&meta, 5);
+  pb_ring_buffer_advance_tail(&meta, 5);
   ASSERT_EQ(meta.tail, 0);
 
   // Advance head
   meta.tail = 0;
   meta.head = 0;
-  ring_buffer_advance_head(&meta, 5);
+  pb_ring_buffer_advance_head(&meta, 5);
   ASSERT_EQ(meta.head, 5);
-  ring_buffer_advance_head(&meta, 5);
+  pb_ring_buffer_advance_head(&meta, 5);
   ASSERT_EQ(meta.head, 0);
 }
 
@@ -128,7 +128,7 @@ TEST(ring_buffer_nanopb, write_callback)
   uint8_t tmp[4] = {1, 2, 3, 4};
   stream.callback(&stream, tmp, sizeof(tmp));
   // verify that it has been written well
-  ASSERT_EQ(ring_buffer_metadata_used(&meta), 4);
+  ASSERT_EQ(pb_ring_buffer_metadata_used(&meta), 4);
   for (size_t i = 0; i < sizeof(tmp); i++) {
     ASSERT_EQ(buf[i], tmp[i]);
   }
@@ -138,7 +138,7 @@ TEST(ring_buffer_nanopb, write_callback)
 
   // write it again: this will cause buffer to rollover
   stream.callback(&stream, tmp, sizeof(tmp));
-  ASSERT_EQ(ring_buffer_metadata_used(&meta), 4);
+  ASSERT_EQ(pb_ring_buffer_metadata_used(&meta), 4);
   // verity it one more time: part of data should be rolled over
   ASSERT_EQ(buf[4], tmp[0]);
   ASSERT_EQ(buf[5], tmp[1]);

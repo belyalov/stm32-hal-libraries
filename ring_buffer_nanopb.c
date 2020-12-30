@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "ring_buffer_nanopb.h"
 
-size_t ring_buffer_metadata_used(struct ring_buffer_metadata* meta)
+size_t pb_ring_buffer_metadata_used(struct ring_buffer_metadata* meta)
 {
   // No rollover
   if (meta->head >= meta->tail) {
@@ -12,9 +12,9 @@ size_t ring_buffer_metadata_used(struct ring_buffer_metadata* meta)
   return meta->size - meta->tail + meta->head;
 }
 
-size_t ring_buffer_metadata_free(struct ring_buffer_metadata* meta)
+size_t pb_ring_buffer_metadata_free(struct ring_buffer_metadata* meta)
 {
-  return meta->size - ring_buffer_metadata_used(meta);
+  return meta->size - pb_ring_buffer_metadata_used(meta);
 }
 
 
@@ -25,7 +25,7 @@ static bool pb_istream_read_callback(pb_istream_t *istream, uint8_t *buf, size_t
   if (count == 0) {
     return true;
   }
-  if (count > ring_buffer_metadata_used(meta)) {
+  if (count > pb_ring_buffer_metadata_used(meta)) {
     // Not enough data in the buffer
     return false;
   }
@@ -56,7 +56,7 @@ static bool pb_ostream_write_callback(pb_ostream_t* ostream, const uint8_t* buf,
   if (count == 0) {
     return true;
   }
-  if (count > ring_buffer_metadata_free(meta)) {
+  if (count > pb_ring_buffer_metadata_free(meta)) {
     // Not enough free space in the buffer
     return false;
   }
@@ -102,12 +102,12 @@ pb_ostream_t pb_ostream_from_ring_buffer(struct ring_buffer_metadata* meta)
   return stream;
 }
 
-void ring_buffer_advance_tail(struct ring_buffer_metadata* meta, size_t len)
+void pb_ring_buffer_advance_tail(struct ring_buffer_metadata* meta, size_t len)
 {
   meta->tail = (meta->tail + len) % meta->size;
 }
 
-void ring_buffer_advance_head(struct ring_buffer_metadata* meta, size_t len)
+void pb_ring_buffer_advance_head(struct ring_buffer_metadata* meta, size_t len)
 {
   meta->head = (meta->head + len) % meta->size;
 }
