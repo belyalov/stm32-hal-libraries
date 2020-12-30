@@ -62,7 +62,6 @@ typedef struct {
   // SPI parameters
   SPI_HandleTypeDef  *spi;
   GPIO_TypeDef       *nss_port;
-  uint16_t            nss_pin;
   uint32_t            spi_timeout;
   // Operating frequency, in Hz
   uint32_t            frequency;
@@ -72,6 +71,8 @@ typedef struct {
   // Base FIFO addresses for RX/TX
   uint8_t             tx_base_addr;
   uint8_t             rx_base_addr;
+
+  uint16_t            nss_pin;
 } lora_sx1276;
 
 
