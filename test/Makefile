@@ -22,7 +22,7 @@ SOURCES = \
 HEADERS = \
 	$(SOURCE_DIR)/debug.h \
 	$(SOURCE_DIR)/lora_sx1276.h \
-	$(SOURCE_DIR)/ring_buffer.h \
+	$(SOURCE_DIR)/ring_buffer_fixed_size.h \
 	$(SOURCE_DIR)/ring_buffer_nanopb.h \
 	$(SOURCE_DIR)/si7021.h \
 	$(SOURCE_DIR)/utils.h
@@ -32,7 +32,7 @@ TESTS = \
 	$(TEST_DIR)/test_debug.cpp \
 	$(TEST_DIR)/test_si7021.cpp \
 	$(TEST_DIR)/test_static_alloc.cpp \
-	$(TEST_DIR)/test_ring.cpp \
+	$(TEST_DIR)/test_ring_fixed_size.cpp \
 	$(TEST_DIR)/test_ring_nanopb.cpp \
 	$(TEST_DIR)/test_utils.cpp
 

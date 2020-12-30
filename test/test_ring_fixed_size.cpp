@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include "ring_buffer.h"
+#include "ring_buffer_fixed_size.h"
 
 using namespace std;
 
@@ -12,7 +12,7 @@ struct item {
 };
 
 
-TEST(ring_buffer, push_pop_simple)
+TEST(ring_buffer_fixed_size, push_pop_simple)
 {
   // Create ring buffer of 10 items
   RING_BUFFER_DECLARE(rbuf, struct item, 10);
@@ -41,7 +41,7 @@ TEST(ring_buffer, push_pop_simple)
   ASSERT_FALSE(RING_BUFFER_FULL(rbuf));
 }
 
-TEST(ring_buffer, push_pop_all)
+TEST(ring_buffer_fixed_size, push_pop_all)
 {
   // Create ring buffer of 10 items
   RING_BUFFER_DECLARE(rbuf, struct item, 10);
@@ -75,7 +75,7 @@ TEST(ring_buffer, push_pop_all)
   ASSERT_TRUE(RING_BUFFER_EMPTY(rbuf));
 }
 
-TEST(ring_buffer, push_override)
+TEST(ring_buffer_fixed_size, push_override)
 {
   // Create ring buffer of 10 items
   RING_BUFFER_DECLARE(rbuf, struct item, 10);
