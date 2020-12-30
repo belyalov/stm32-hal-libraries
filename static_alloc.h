@@ -16,11 +16,12 @@
 #define EXPORT
 #endif
 
+typedef void shared_void;
 
-EXPORT void  static_alloc_init(uint8_t* buf, uint32_t buf_size);
-EXPORT void* static_alloc_alloc(uint32_t size);
-EXPORT void* static_alloc_copy(void* ptr);
-EXPORT void  static_alloc_free(void* ptr);
+EXPORT void         static_alloc_init(uint8_t* buf, uint32_t buf_size);
+EXPORT shared_void* static_alloc_alloc(uint32_t size);
+EXPORT shared_void* static_alloc_copy(shared_void* ptr);
+EXPORT void         static_alloc_free(shared_void* ptr);
 
 EXPORT uint32_t static_alloc_info_mem_free(void);
 

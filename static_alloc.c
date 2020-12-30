@@ -46,12 +46,12 @@ void static_alloc_init(uint8_t* buf, uint32_t buf_size)
 #endif
 }
 
-void* static_alloc_alloc(uint32_t size)
+shared_void* static_alloc_alloc(uint32_t size)
 {
   uint32_t total_size = size + sizeof(struct static_alloc_item);
   uint32_t blocks_required = (total_size + STATIC_ALLOC_BLOCK_SIZE - 1) / STATIC_ALLOC_BLOCK_SIZE;
   uint32_t blocks_found = 0;
-  void *   result = NULL;
+  void*    result = NULL;
 
   // FreeRTOS requires critical section in order to be task safe
 #ifdef STATIC_ALLOC_FREERTOS
@@ -92,7 +92,7 @@ void* static_alloc_alloc(uint32_t size)
   return result;
 }
 
-void* static_alloc_copy(void* ptr)
+shared_void* static_alloc_copy(shared_void* ptr)
 {
   struct static_alloc_item* item = (struct static_alloc_item*)((uint8_t*)ptr - sizeof(struct static_alloc_item));
   item->refcount++;
@@ -100,7 +100,7 @@ void* static_alloc_copy(void* ptr)
   return ptr;
 }
 
-void static_alloc_free(void* ptr)
+void static_alloc_free(shared_void* ptr)
 {
   struct static_alloc_item* item = (struct static_alloc_item*)((uint8_t*)ptr - sizeof(struct static_alloc_item));
 
