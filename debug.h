@@ -42,15 +42,6 @@ extern SemaphoreHandle_t DEBUG_MUTEX;
 #define DEBUG_INT_LN(s, v)         DEBUG_UART_LOCK; debug_print_int64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
 #define DEBUG_UINT_HEX(s, v)       DEBUG_UART_LOCK; debug_print_hex64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
 #define DEBUG_UINT_HEXLN(s, v)     DEBUG_UART_LOCK; debug_print_hex64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
-// format based debug logger: uses snprintf() to serialize arguments. Adds around 2k to binary size
-#define DEBUGF(format, ...)                                                                        \
-  do {                                                                                             \
-    extern uint8_t* _stm32_hal_debug_buffer;                                                       \
-    uint8_t len = snprintf(_stm32_hal_debug_buffer, DEBUG_BUFFER_SIZE - 1, format, ##__VA_ARGS__); \
-    debug_buf[len] = 0;                                                                            \
-    DEBUG(debug_buf);                                                                              \
-  } while(0);
-#endif
 
 EXPORT void debug_print_str(UART_HandleTypeDef *uart, const char *msg);
 EXPORT void debug_print_strln(UART_HandleTypeDef *uart, const char *msg);
