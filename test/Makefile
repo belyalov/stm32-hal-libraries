@@ -16,6 +16,7 @@ SOURCES = \
 	$(SOURCE_DIR)/debug.c \
 	$(SOURCE_DIR)/static_alloc.c \
 	$(SOURCE_DIR)/si7021.c \
+	$(SOURCE_DIR)/ring_buffer.c \
 	$(SOURCE_DIR)/ring_buffer_nanopb.c \
 	$(SOURCE_DIR)/veml6030.c
 
@@ -32,6 +33,7 @@ TESTS = \
 	$(TEST_DIR)/test_debug.cpp \
 	$(TEST_DIR)/test_si7021.cpp \
 	$(TEST_DIR)/test_static_alloc.cpp \
+	$(TEST_DIR)/test_ring.cpp \
 	$(TEST_DIR)/test_ring_fixed_size.cpp \
 	$(TEST_DIR)/test_ring_nanopb.cpp \
 	$(TEST_DIR)/test_utils.cpp
@@ -101,7 +103,7 @@ test: $(TESTS_BINARY)
 	@$(BUILD_DIR_CROSS)/tests
 
 tests: $(TESTS_BINARY)
-	@$(BUILD_DIR_CROSS)/tests --gtest_filter=static*
+	@$(BUILD_DIR_CROSS)/tests --gtest_filter=ring_buffer.*
 
 clean:
 	rm -f $(OBJECTS_ARM) $(OBJECTS_CROSS) $(ARM_BINARY) $(TESTS_BINARY)
