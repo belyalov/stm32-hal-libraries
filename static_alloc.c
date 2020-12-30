@@ -5,6 +5,15 @@
 
 #include "static_alloc.h"
 
+// Use mutex for alloc/free operation under freertos
+#ifdef STATIC_ALLOC_FREERTOS
+#include "FreeRTOS.h"
+#include "semphr.h"
+static SemaphoreHandle_t  _mutex;
+static StaticSemaphore_t  _mutex_buffer;
+#endif
+
+
 struct static_alloc_item {
   uint16_t refcount;
   uint16_t blocks_used;
@@ -23,7 +32,6 @@ void static_alloc_init(uint8_t* buf, uint32_t buf_size)
 {
   memset(buf, 0, buf_size);
   _blocks_status = (uint32_t*)buf;
-
   // First block reserved for metadata
   _blocks_count = (buf_size / STATIC_ALLOC_BLOCK_SIZE) - 1;
   // User blocks located right after block statuses
@@ -32,6 +40,10 @@ void static_alloc_init(uint8_t* buf, uint32_t buf_size)
   for (uint32_t i = 0; i < _blocks_count; i++) {
     MARK_BLOCK_AS_FREE(i);
   }
+  // Create mutex if RTOS enabled
+#ifdef STATIC_ALLOC_FREERTOS
+  _mutex = xSemaphoreCreateMutexStatic(&_mutex_buffer);
+#endif
 }
 
 void* static_alloc_alloc(uint32_t size)
@@ -39,7 +51,14 @@ void* static_alloc_alloc(uint32_t size)
   uint32_t total_size = size + sizeof(struct static_alloc_item);
   uint32_t blocks_required = (total_size + STATIC_ALLOC_BLOCK_SIZE - 1) / STATIC_ALLOC_BLOCK_SIZE;
   uint32_t blocks_found = 0;
+  void *   result = NULL;
 
+  // FreeRTOS requires critical section in order to be task safe
+#ifdef STATIC_ALLOC_FREERTOS
+  if (xSemaphoreTake(_mutex, portMAX_DELAY) != pdTRUE) {
+    return NULL;
+  }
+#endif
   // Find first free block
   // TODO: this could be improved by using __buildin_* functions to
   // count bits, however it will complicate the code.
@@ -60,12 +79,18 @@ void* static_alloc_alloc(uint32_t size)
       struct static_alloc_item* item = (struct static_alloc_item*)(_blocks_user_data + offset);
       item->blocks_used = blocks_required;
       item->refcount = 1;
-      return (void*) ((uint8_t*)item + sizeof(struct static_alloc_item));
+      result = ((uint8_t*)item + sizeof(struct static_alloc_item));
+      break;
     }
   }
-
   // Out of memory: unable to find continuos array of N blocks
-  return NULL;
+
+end:
+  // Release mutex for RTOS version
+#ifdef STATIC_ALLOC_FREERTOS
+  xSemaphoreGive(_mutex);
+#endif
+  return result;
 }
 
 void* static_alloc_copy(void* ptr)
@@ -80,6 +105,13 @@ void static_alloc_free(void* ptr)
 {
   struct static_alloc_item* item = (struct static_alloc_item*)((uint8_t*)ptr - sizeof(struct static_alloc_item));
 
+  // FreeRTOS requires critical section in order to be task safe
+#ifdef STATIC_ALLOC_FREERTOS
+  if (xSemaphoreTake(_mutex, portMAX_DELAY) != pdTRUE) {
+    return NULL;
+  }
+#endif
+
   // Dec ref count
   if (item->refcount > 0) {
     item->refcount--;
@@ -93,6 +125,11 @@ void static_alloc_free(void* ptr)
       MARK_BLOCK_AS_FREE(i);
     }
   }
+
+  // Release mutex for RTOS version
+#ifdef STATIC_ALLOC_FREERTOS
+  xSemaphoreGive(_mutex);
+#endif
 }
 
 uint32_t static_alloc_info_mem_free(void)
