@@ -6,6 +6,7 @@
 
 using namespace std;
 
+
 TEST(ring_buffer, read_write)
 {
   struct ring_buffer ring;
@@ -104,3 +105,17 @@ TEST(ring_buffer, read_write)
   }
 }
 
+TEST(ring_buffer, reset)
+{
+  struct ring_buffer ring;
+  uint8_t ringbuf[10] = {};
+  ring_buffer_init(&ring, ringbuf, sizeof(ringbuf));
+
+  // "Write" some data
+  ring_buffer_advance_head(&ring, 5);
+  ASSERT_EQ(5, ring_buffer_used(&ring));
+
+  // Reset buffer
+  ring_buffer_reset(&ring);
+  ASSERT_EQ(0, ring_buffer_used(&ring));
+}

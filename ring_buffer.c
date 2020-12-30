@@ -89,3 +89,10 @@ void ring_buffer_advance_head(struct ring_buffer* meta, uint32_t how_many)
   meta->used += how_many;
   meta->head = (meta->head + how_many) % meta->size;
 }
+
+void ring_buffer_reset(struct ring_buffer* meta)
+{
+  meta->head = 0;
+  meta->tail = 0;
+  meta->used = 0;
+}
