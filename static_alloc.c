@@ -85,7 +85,6 @@ void* static_alloc_alloc(uint32_t size)
   }
   // Out of memory: unable to find continuos array of N blocks
 
-end:
   // Release mutex for RTOS version
 #ifdef STATIC_ALLOC_FREERTOS
   xSemaphoreGive(_mutex);
@@ -107,9 +106,7 @@ void static_alloc_free(void* ptr)
 
   // FreeRTOS requires critical section in order to be task safe
 #ifdef STATIC_ALLOC_FREERTOS
-  if (xSemaphoreTake(_mutex, portMAX_DELAY) != pdTRUE) {
-    return NULL;
-  }
+  xSemaphoreTake(_mutex, portMAX_DELAY);
 #endif
 
   // Dec ref count
