@@ -12,6 +12,18 @@ TEST(ring_buffer, read_write)
   uint8_t ringbuf[10] = {};
   ring_buffer_init(&ring, ringbuf, sizeof(ringbuf));
 
+  // Simulate that some data has written externally (advance)
+  {
+    ring_buffer_advance_head(&ring, 3);
+    ASSERT_EQ(3, ring_buffer_used(&ring));
+    uint8_t tmp[10] = {};
+    bool res = ring_buffer_read(&ring, tmp, 3);
+    ASSERT_TRUE(res);
+    for (size_t i = 0; i < 3; i++) {
+      ASSERT_EQ(tmp[i], 0);
+    }
+  }
+
   // Read from empty buffer
   {
     uint8_t tmp[10] = {};

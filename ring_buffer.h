@@ -26,6 +26,7 @@ EXPORT void     ring_buffer_init(struct ring_buffer* meta, uint8_t* buf, uint32_
 EXPORT bool     ring_buffer_write(struct ring_buffer* meta, uint8_t* buf, uint32_t write_size);
 EXPORT bool     ring_buffer_read(struct ring_buffer* meta, uint8_t* buf, uint32_t read_size);
 
+EXPORT void     ring_buffer_advance_head(struct ring_buffer* meta, uint32_t how_many);
 EXPORT uint32_t ring_buffer_used(struct ring_buffer* meta);
 EXPORT uint32_t ring_buffer_free(struct ring_buffer* meta);
 

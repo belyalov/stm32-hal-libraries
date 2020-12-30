@@ -84,3 +84,8 @@ uint32_t ring_buffer_free(struct ring_buffer* meta)
   return meta->size - meta->used;
 }
 
+void ring_buffer_advance_head(struct ring_buffer* meta, uint32_t how_many)
+{
+  meta->used += how_many;
+  meta->head = (meta->head + how_many) % meta->size;
+}
