@@ -221,9 +221,11 @@ uint8_t  lora_send_packet_blocking(lora_sx1276 *lora, uint8_t *data, uint8_t dat
 // RECEIVE packet routines //
 
 // Checks if packet modem has packet awaiting to be received
-
 // Returns 0 if no packet is available, or any positive integer in case packet is ready
 uint8_t  lora_is_packet_available(lora_sx1276 *lora);
+
+// If modem has packet awaiting to be received - returns it's length.
+uint8_t  lora_pending_packet_length(lora_sx1276 *lora);
 
 // Receives packet from LoRa modem
 // Params:
@@ -304,6 +306,9 @@ void     lora_enable_interrupt_rx_done(lora_sx1276 *lora);
 // Enables interrupt on DIO0 when transmission is done
 // SX1276 module will pull DIO0 line high
 void     lora_enable_interrupt_tx_done(lora_sx1276 *lora);
+
+// Clears all RX interrupts on DIO0 (done, timeout, crc, etc)
+void lora_clear_interrupt_rx_all(lora_sx1276 *lora);
 
 // Clears TX interrupt on DIO0
 void     lora_clear_interrupt_tx_done(lora_sx1276 *lora);

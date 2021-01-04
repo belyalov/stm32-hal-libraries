@@ -546,6 +546,22 @@ uint8_t lora_is_packet_available(lora_sx1276 *lora)
   return  irqs & (IRQ_FLAGS_RX_DONE | IRQ_FLAGS_RX_TIMEOUT);
 }
 
+uint8_t lora_pending_packet_length(lora_sx1276 *lora)
+{
+  uint8_t len;
+
+  // Query for current header mode - implicit / explicit
+  uint8_t implicit = read_register(lora, REG_MODEM_CONFIG_1) & MC1_IMPLICIT_HEADER_MODE;
+  if (implicit) {
+    len = read_register(lora, REG_PAYLOAD_LENGTH);
+  } else {
+    len = read_register(lora, REG_RX_NB_BYTES);
+  }
+
+  return len;
+}
+
+
 static uint8_t lora_receive_packet_base(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error, uint8_t mode)
 {
   assert_param(lora && buffer && buffer_len > 0);
@@ -576,15 +592,7 @@ static uint8_t lora_receive_packet_base(lora_sx1276 *lora, uint8_t *buffer, uint
       goto done;
     }
     // Query for current header mode - implicit / explicit
-    uint8_t implicit = read_register(lora, REG_MODEM_CONFIG_1) & MC1_IMPLICIT_HEADER_MODE;
-    if (implicit) {
-      len = read_register(lora, REG_PAYLOAD_LENGTH);
-    } else {
-      len = read_register(lora, REG_RX_NB_BYTES);
-    }
-    if (len >= buffer_len) {
-      len = buffer_len;
-    }
+    len = lora_pending_packet_length(lora);
     // Set FIFO to beginning of the packet
     uint8_t offset = read_register(lora, REG_FIFO_RX_CURRENT_ADDR);
     write_register(lora, REG_FIFO_ADDR_PTR, offset);
@@ -656,6 +664,12 @@ void lora_clear_interrupt_tx_done(lora_sx1276 *lora)
 {
   write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_TX_DONE);
 }
+
+void lora_clear_interrupt_rx_all(lora_sx1276 *lora)
+{
+  write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_RX_ALL);
+}
+
 
 uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
     uint16_t nss_pin, uint64_t freq)

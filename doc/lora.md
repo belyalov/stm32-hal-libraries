@@ -197,6 +197,10 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
    Checks if packet modem has packet awaiting to be received
    Returns `0` if no packet is available, or any positive integer in case packet is ready
 
+ * `uint8_t  lora_pending_packet_length(lora_sx1276 *lora);`
+   If modem has packet awaiting to be received - returns it's length.
+
+
  * `uint8_t  lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error)`
    Receives packet from LoRa modem
     - `buffer` - pointer to buffer where copy packet to.
