@@ -3,6 +3,7 @@ Set of useful high quality libraries to make interaction with various hardware /
 
 ## List of libraries
 - [LoRa library](https://github.com/belyalov/stm32-hal-libraries/blob/master/doc/lora.md) (for devices based on `SX1276` chip), **does not** implement LoRaWAN.
+- [SHTC3 temperature/humidity](https://github.com/belyalov/stm32-hal-libraries/blob/master/doc/shtc3.md) high precision I2C sensor.
 - [SI7021 temperature/humidity](https://github.com/belyalov/stm32-hal-libraries/blob/master/doc/si7021.md) high precision I2C sensor.
 - [VEML6030 ambient light](https://github.com/belyalov/stm32-hal-libraries/blob/master/doc/veml6030.md) high precision Ambient Light I2C sensor.
 - **Debug** - tiny size helpers to print text / values through UART
