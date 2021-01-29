@@ -440,7 +440,7 @@ uint8_t lora_is_transmitting(lora_sx1276 *lora)
 
   uint8_t opmode = read_register(lora, REG_OP_MODE);
 
-  return opmode & (1 << OPMODE_TX) ? LORA_BUSY : LORA_OK;
+  return (opmode & OPMODE_TX) == OPMODE_TX ? LORA_BUSY : LORA_OK;
 }
 
 static uint8_t lora_send_packet_base(lora_sx1276 *lora, uint8_t *data, uint8_t data_len, uint8_t mode)
