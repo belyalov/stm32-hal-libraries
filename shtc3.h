@@ -29,7 +29,7 @@ EXPORT uint32_t shtc3_sleep(I2C_HandleTypeDef *hi2c);
 // You must wait for 240us to let sensor enter into IDLE mode.
 // Params:
 //  - `hi2c` I2C bus
-// Returns non zero in case of error
+// Returns zero in case of error
 EXPORT uint32_t shtc3_wakeup(I2C_HandleTypeDef *hi2c);
 
 // Performs full cycle: starts temperature/humidity measurements using "clock stretch" method.
@@ -37,7 +37,7 @@ EXPORT uint32_t shtc3_wakeup(I2C_HandleTypeDef *hi2c);
 //  - `hi2c` I2C bus
 //  - `temp` measured temperature, in C multiplied by 100 (e.g. 24.1C -> 2410)
 //  - `hum` measured relative humidity, in percents
-// Returns non zero in case of error
+// Returns zero in case of error
 EXPORT uint32_t shtc3_perform_measurements(I2C_HandleTypeDef *hi2c, int32_t* temp, int32_t* hum);
 
 // Start temperature/humidity measurements using "clock stretch" approach, in low power mode.
@@ -46,7 +46,7 @@ EXPORT uint32_t shtc3_perform_measurements(I2C_HandleTypeDef *hi2c, int32_t* tem
 //  - `hi2c` I2C bus
 //  - `temp` measured temperature, in C multiplied by 100 (e.g. 24.1C -> 2410)
 //  - `hum` measured relative humidity, in percents
-// Returns non zero in case of error
+// Returns zero in case of error
 EXPORT uint32_t shtc3_perform_measurements_low_power(I2C_HandleTypeDef *hi2c, int32_t* out_temp, int32_t* out_hum);
 
 #endif

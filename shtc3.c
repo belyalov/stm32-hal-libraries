@@ -122,12 +122,12 @@ static uint32_t _perform_measurements(I2C_HandleTypeDef *hi2c, uint16_t command,
 
   uint32_t res = HAL_I2C_Master_Transmit(hi2c, SHTC3_ADDRESS_WRITE, (uint8_t*)&command, 2, 100);
   if (res != HAL_OK) {
-    return res;
+    return 0;
   }
 
   res = HAL_I2C_Master_Receive(hi2c, SHTC3_ADDRESS_READ, result, 6, 100);
   if (res != HAL_OK) {
-    return res;
+    return 0;
   }
 
   return _read_values(result, out_temp, out_hum);
