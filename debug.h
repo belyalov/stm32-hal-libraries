@@ -33,15 +33,15 @@ extern SemaphoreHandle_t DEBUG_MUTEX;
 #define DEBUG_UART_LOCK
 #define DEBUG_UART_UNLOCK
 #endif
-#define DEBUG(s)                   DEBUG_UART_LOCK; debug_print_str(&DEBUG_UART, s); DEBUG_UART_UNLOCK;
-#define DEBUGLN(s)                 DEBUG_UART_LOCK; debug_print_strln(&DEBUG_UART, s); DEBUG_UART_UNLOCK;
-#define DEBUG_STR_LN(s1, s2)       DEBUG_UART_LOCK; debug_print_strstrln(&DEBUG_UART, s1, s2); DEBUG_UART_UNLOCK;
-#define DEBUG_UINT(s, v)           DEBUG_UART_LOCK; debug_print_uint64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
-#define DEBUG_UINT_LN(s, v)        DEBUG_UART_LOCK; debug_print_uint64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
-#define DEBUG_INT(s, v)            DEBUG_UART_LOCK; debug_print_int64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
-#define DEBUG_INT_LN(s, v)         DEBUG_UART_LOCK; debug_print_int64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
-#define DEBUG_UINT_HEX(s, v)       DEBUG_UART_LOCK; debug_print_hex64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
-#define DEBUG_UINT_HEXLN(s, v)     DEBUG_UART_LOCK; debug_print_hex64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK;
+#define DEBUG(s)                   do { DEBUG_UART_LOCK; debug_print_str(&DEBUG_UART, s); DEBUG_UART_UNLOCK; } while(0);
+#define DEBUGLN(s)                 do { DEBUG_UART_LOCK; debug_print_strln(&DEBUG_UART, s); DEBUG_UART_UNLOCK; } while(0);
+#define DEBUG_STR_LN(s1, s2)       do { DEBUG_UART_LOCK; debug_print_strstrln(&DEBUG_UART, s1, s2); DEBUG_UART_UNLOCK; } while(0);
+#define DEBUG_UINT(s, v)           do { DEBUG_UART_LOCK; debug_print_uint64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK; } while(0);
+#define DEBUG_UINT_LN(s, v)        do { DEBUG_UART_LOCK; debug_print_uint64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK; } while(0);
+#define DEBUG_INT(s, v)            do { DEBUG_UART_LOCK; debug_print_int64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK; } while(0);
+#define DEBUG_INT_LN(s, v)         do { DEBUG_UART_LOCK; debug_print_int64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK; } while(0);
+#define DEBUG_UINT_HEX(s, v)       do { DEBUG_UART_LOCK; debug_print_hex64(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK; } while(0);
+#define DEBUG_UINT_HEXLN(s, v)     do { DEBUG_UART_LOCK; debug_print_hex64ln(&DEBUG_UART, s, v); DEBUG_UART_UNLOCK; } while(0);
 #endif
 
 EXPORT void debug_print_str(UART_HandleTypeDef *uart, const char *msg);
