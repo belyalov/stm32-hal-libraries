@@ -30,12 +30,17 @@ static uint32_t  _blocks_count;
 
 void static_alloc_init(uint8_t* buf, uint32_t buf_size)
 {
+  if (buf_size > 32000) {
+    // At most 512 blocks may fit into metadata. don't use more memory
+    buf_size = 31744;
+  }
   memset(buf, 0, buf_size);
-  _blocks_status = (uint32_t*)buf;
+  uint32_t max_possible_blocks = buf_size / STATIC_ALLOC_BLOCK_SIZE;
   // First block reserved for metadata
-  _blocks_count = (buf_size / STATIC_ALLOC_BLOCK_SIZE) - 1;
+  _blocks_status = (uint32_t*)buf;
+  _blocks_count = max_possible_blocks - 1;
   // User blocks located right after block statuses
-  _blocks_user_data = buf + (((_blocks_count + 31) / 32) * 4);
+  _blocks_user_data = buf + STATIC_ALLOC_BLOCK_SIZE;
   // Init block status: all free
   for (uint32_t i = 0; i < _blocks_count; i++) {
     MARK_BLOCK_AS_FREE(i);
@@ -139,4 +144,25 @@ uint32_t static_alloc_info_mem_free(void)
     }
   }
   return free;
+}
+
+// unittests //
+EXPORT uint32_t unittest_is_block_used(uint32_t block)
+{
+  return !IS_BLOCK_FREE(block);
+}
+
+EXPORT uint32_t unittest_is_block_free(uint32_t block)
+{
+  return IS_BLOCK_FREE(block);
+}
+
+EXPORT uint32_t unittest_blocks_count()
+{
+  return _blocks_count;
+}
+
+EXPORT uint8_t* unittest_user_data_starts_at()
+{
+  return _blocks_user_data;
 }
