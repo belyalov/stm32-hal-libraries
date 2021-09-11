@@ -1,8 +1,8 @@
 // Copyright (c) Konstantin Belyalov. All rights reserved.
 // Licensed under the MIT license.
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef HTONS_H
+#define HTONS_H
 
 #define HTONS(x) ( ((x) << 8) | ( ((x) >> 8) & 0xFF) )
 #define NTOHS(x) HTONS(x)

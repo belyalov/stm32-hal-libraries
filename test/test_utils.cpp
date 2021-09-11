@@ -9,7 +9,7 @@
 #undef NTOHS
 #undef HTONL
 #undef NTOHL
-#include "utils.h"
+#include "htons.h"
 
 using namespace std;
 

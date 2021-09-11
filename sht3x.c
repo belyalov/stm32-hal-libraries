@@ -61,7 +61,7 @@ bool sht3x_sensor_present(I2C_HandleTypeDef *hi2c, uint16_t address)
 
 bool sht3x_one_shot_measurement_clock_stretching(I2C_HandleTypeDef *hi2c, uint16_t address, uint16_t type, int32_t* temp, uint32_t* hum)
 {
-    int res = HAL_I2C_Master_Transmit(hi2c, WRITE_ADDR(address), &type, 2, 1000);
+    int res = HAL_I2C_Master_Transmit(hi2c, WRITE_ADDR(address), (uint8_t*)&type, 2, 1000);
     if (res != HAL_OK) {
         return false;
     }

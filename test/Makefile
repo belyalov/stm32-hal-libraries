@@ -26,7 +26,7 @@ HEADERS = \
 	$(SOURCE_DIR)/ring_buffer_fixed_size.h \
 	$(SOURCE_DIR)/ring_buffer_nanopb.h \
 	$(SOURCE_DIR)/si7021.h \
-	$(SOURCE_DIR)/utils.h
+	$(SOURCE_DIR)/htons.h
 
 TESTS = \
 	$(TEST_DIR)/test_mocks.cpp \
