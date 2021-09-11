@@ -1,5 +1,4 @@
 #include "shtc3.h"
-#include "debug.h"
 
 #define SHTC3_ADDRESS_READ          (0x70 << 1) | 0x01
 #define SHTC3_ADDRESS_WRITE         (0x70 << 1)
