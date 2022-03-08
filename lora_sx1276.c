@@ -386,7 +386,7 @@ void lora_set_spreading_factor(lora_sx1276 *lora, uint8_t sf)
   }
   // Set new spread factor
   uint8_t mc2 = read_register(lora, REG_MODEM_CONFIG_2);
-  mc2 |= sf << 4;
+  mc2 = (mc2 & 0x0F) | (sf << 4);
   // uint8_t new_config = (current_config & 0x0f) | ((sf << 4) & 0xf0);
   write_register(lora, REG_MODEM_CONFIG_2, mc2);
 
