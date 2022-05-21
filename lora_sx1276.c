@@ -361,7 +361,7 @@ void lora_set_signal_bandwidth(lora_sx1276 *lora, uint64_t bw)
   // Coding rate / Header mode, so read them before set bandwidth
   uint8_t mc1 = read_register(lora, REG_MODEM_CONFIG_1);
   // Signal bandwidth uses 4-7 bits of config
-  mc1 |= bw << 4;
+  mc1 = (mc1 & 0x0F) | bw << 4;
   write_register(lora, REG_MODEM_CONFIG_1, mc1);
 
   set_low_data_rate_optimization(lora);
