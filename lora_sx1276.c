@@ -339,7 +339,7 @@ uint8_t lora_packet_rssi(lora_sx1276 *lora)
 {
   assert_param(lora);
 
-  uint8_t rssi = read_register(lora, REG_PKT_RSSI_VALUE);
+  int8_t rssi = read_register(lora, REG_PKT_RSSI_VALUE);
 
   return lora->frequency < (868 * MHZ) ? rssi - 164 : rssi - 157;
 }
