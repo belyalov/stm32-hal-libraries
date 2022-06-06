@@ -335,11 +335,11 @@ void lora_set_frequency(lora_sx1276 *lora, uint64_t freq)
   write_register(lora, REG_FRF_LSB, frf & 0xff);
 }
 
-uint8_t lora_packet_rssi(lora_sx1276 *lora)
+int8_t lora_packet_rssi(lora_sx1276 *lora)
 {
   assert_param(lora);
 
-  int8_t rssi = read_register(lora, REG_PKT_RSSI_VALUE);
+  uint8_t rssi = read_register(lora, REG_PKT_RSSI_VALUE);
 
   return lora->frequency < (868 * MHZ) ? rssi - 164 : rssi - 157;
 }
