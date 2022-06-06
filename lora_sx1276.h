@@ -170,7 +170,7 @@ void     lora_set_explicit_header_mode(lora_sx1276 *lora);
 // Received packet information //
 
 // Returns RSSI of last received packet
-uint8_t  lora_packet_rssi(lora_sx1276 *lora);
+int8_t  lora_packet_rssi(lora_sx1276 *lora);
 
 // Returns SNR of last received packet
 uint8_t  lora_packet_snr(lora_sx1276 *lora);
