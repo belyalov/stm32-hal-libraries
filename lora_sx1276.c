@@ -350,7 +350,7 @@ uint8_t lora_packet_snr(lora_sx1276 *lora)
 
   uint8_t snr = read_register(lora, REG_PKT_SNR_VALUE);
 
-  return snr / 5;
+  return snr / 4;
 }
 
 void lora_set_signal_bandwidth(lora_sx1276 *lora, uint64_t bw)
