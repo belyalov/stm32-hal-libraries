@@ -1,6 +1,7 @@
 // Copyright (c) Konstantin Belyalov. All rights reserved.
 // Licensed under the MIT license.
 #include "lora_sx1276.h"
+#include <stdio.h>
 
 // sx1276 registers
 #define REG_FIFO                 0x00
@@ -204,12 +205,22 @@ static void set_low_data_rate_optimization(lora_sx1276 *lora)
 {
   assert_param(lora);
 
-  // Read current signal bandwidth
-  uint64_t bandwidth = read_register(lora, REG_MODEM_CONFIG_1) >> 4;
-  // Read current spreading factor
-  uint8_t  sf = read_register(lora, REG_MODEM_CONFIG_2) >> 4;
+  // Read current signal bandwidth / Spreading Factor
+  uint64_t bandwidth = (read_register(lora, REG_MODEM_CONFIG_1) >> 4) & 0x0F;
+  uint8_t  sf = (read_register(lora, REG_MODEM_CONFIG_2) >> 4) & 0x0F;
 
-  uint8_t  mc3 = MC3_AGCAUTO;
+  uint8_t mc3 = read_register(lora, REG_MODEM_CONFIG_3);
+  mc3 |= MC3_AGCAUTO;
+
+  int8_t ldo =
+    (bandwidth == LORA_BANDWIDTH_125_KHZ && sf >= 11) ||
+    (bandwidth == LORA_BANDWIDTH_250_KHZ && sf >= 12);
+
+  if (ldo) {
+    mc3 |= MC3_MOBILE_NODE;
+  } else {
+    mc3 &= (uint8_t)~MC3_MOBILE_NODE;
+  }
 
   if (sf >= 11 && bandwidth == LORA_BANDWIDTH_125_KHZ) {
     mc3 |= MC3_MOBILE_NODE;
@@ -274,52 +285,47 @@ void lora_set_explicit_header_mode(lora_sx1276 *lora)
   write_register(lora, REG_MODEM_CONFIG_1, mc1);
 }
 
-void lora_set_tx_power(lora_sx1276 *lora, uint8_t level)
+void lora_set_tx_power(lora_sx1276 *lora, uint8_t level_dbm)
 {
   assert_param(lora);
 
   if (lora->pa_mode == LORA_PA_OUTPUT_RFO) {
     // RFO pin
-    assert_param(level <= 15);
-    if (level > 15) {
-      level = 15;
+    assert_param(level_dbm <= 14);
+    if (level_dbm > 14) {
+      level_dbm = 14;
     }
-    // 7 bit -> PaSelect: 0 for RFO    --- = 0x70
-    // 6-4 bits -> MaxPower (select all) --^
-    // 3-0 bits -> Output power, dB (max 15)
-    write_register(lora, REG_PA_CONFIG, 0x70 | level);
+    // RegPaConfig:
+    //  PaSelect=0 (RFO)
+    //  MaxPower=7 (0x70)
+    //  OutputPower maps: Pout ≈ -1 + OutputPower  => OutputPower = Pout + 1
+    write_register(lora, REG_PA_CONFIG, 0x70 | (level_dbm + 1)); // 0..15
+    write_register(lora, REG_PA_DAC, PA_DAC_HALF_POWER);
   } else {
     // PA BOOST pin, from datasheet (Power Amplifier):
     //   Pout=17-(15-OutputPower)
-    assert_param(level <= 20 && level >= 2);
-    if (level > 20) {
-      level = 20;
+    assert_param(level_dbm <= 20 && level_dbm >= 2);
+    if (level_dbm > 20) {
+      level_dbm = 20;
     }
-    if (level < 2) {
-      level = 2;
+    if (level_dbm < 2) {
+      level_dbm = 2;
     }
-    // Module power consumption from datasheet:
-    // RFOP = +20 dBm, on PA_BOOST -> 120mA
-    // RFOP = +17 dBm, on PA_BOOST -> 87mA
-    if (level > 17) {
-      // PA_DAC_HIGH_POWER operation changes last 3 OutputPower modes to:
-      // 13 -> 18dB, 14 -> 19dB, 15 -> 20dB
-      // So subtract 3 from level
-      level -= 3;
-      // Enable High Power mode
+    uint8_t out;
+    if (level_dbm > 17) {
+      // 18..20 dBm uses high power PA DAC
       write_register(lora, REG_PA_DAC, PA_DAC_HIGH_POWER);
-      // Limit maximum current to 140mA (+20mA to datasheet value to be sure)
       set_OCP(lora, 140);
+      // OutputPower maps: Pout ≈ 5 + OutputPower  => OutputPower = Pout - 5
+      out = (uint8_t)(level_dbm - 5); // 13..15 for 18..20 dBm
     } else {
-      // Enable half power mode (default)
       write_register(lora, REG_PA_DAC, PA_DAC_HALF_POWER);
-      // Limit maximum current to 97mA (+10mA to datasheet value to be sure)
-      set_OCP(lora, 97);
+      set_OCP(lora, 100); // 95–100mA typical for 17 dBm
+      // OutputPower maps: Pout ≈ 2 + OutputPower  => OutputPower = Pout - 2
+      out = (uint8_t)(level_dbm - 2); // 0..15 for 2..17 dBm
     }
-    // Minimum power level is 2 which is 0 for chip
-    level -= 2;
-    // 7 bit -> PaSelect: 1 for PA_BOOST
-    write_register(lora, REG_PA_CONFIG, BIT_7 | level);
+    // Set PaSelect=1, MaxPower=7, OutputPower=out
+    write_register(lora, REG_PA_CONFIG, 0x80 | 0x70 | (out & 0x0F));
   }
 }
 
@@ -329,10 +335,12 @@ void lora_set_frequency(lora_sx1276 *lora, uint64_t freq)
 
   // From datasheet: FREQ = (FRF * 32 Mhz) / (2 ^ 19)
   uint64_t frf = (freq << 19) / (32 * MHZ);
+  // FRF is 24-bit
+  frf &= 0xFFFFFF;
 
-  write_register(lora, REG_FRF_MSB, frf >> 16);
-  write_register(lora, REG_FRF_MID, (frf & 0xff00) >> 8);
-  write_register(lora, REG_FRF_LSB, frf & 0xff);
+  write_register(lora, REG_FRF_MSB, (uint8_t)(frf >> 16));
+  write_register(lora, REG_FRF_MID, (uint8_t)(frf & 0xff00) >> 8);
+  write_register(lora, REG_FRF_LSB, (uint8_t)(frf & 0xff));
 }
 
 int8_t lora_packet_rssi(lora_sx1276 *lora)
@@ -670,9 +678,8 @@ void lora_clear_interrupt_rx_all(lora_sx1276 *lora)
   write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_RX_ALL);
 }
 
-
-uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-    uint16_t nss_pin, uint64_t freq)
+uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
+                   uint16_t nss_pin, uint64_t freq, uint8_t sf, uint64_t bw, uint8_t tx_power)
 {
   assert_param(lora && spi);
 
@@ -681,7 +688,11 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
   lora->nss_port = nss_port;
   lora->nss_pin = nss_pin;
   lora->frequency = freq;
-  lora->pa_mode = LORA_PA_OUTPUT_PA_BOOST;
+  if (tx_power <= 14) {
+    lora->pa_mode = LORA_PA_OUTPUT_RFO;
+  } else {
+    lora->pa_mode = LORA_PA_OUTPUT_PA_BOOST;
+  }
   lora->tx_base_addr = LORA_DEFAULT_TX_ADDR;
   lora->rx_base_addr = LORA_DEFAULT_RX_ADDR;
   lora->spi_timeout = LORA_DEFAULT_SPI_TIMEOUT;
@@ -700,20 +711,30 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
 
   // Set frequency
   lora_set_frequency(lora, freq);
-  lora_set_spreading_factor(lora, LORA_DEFAULT_SF);
+  lora_set_spreading_factor(lora, sf);
+  lora_set_coding_rate(lora, LORA_DEFAULT_CR);
   lora_set_preamble_length(lora, LORA_DEFAULT_PREAMBLE_LEN);
-  // By default - explicit header mode
+  // Explicit header mode
   lora_set_explicit_header_mode(lora);
   // Set LNA boost
   uint8_t current_lna = read_register(lora, REG_LNA);
   write_register(lora, REG_LNA,  current_lna | 0x03);
   // Set auto AGC
   write_register(lora, REG_MODEM_CONFIG_3, 0x04);
-  // Set default output power
-  lora_set_tx_power(lora, LORA_DEFAULT_TX_POWER);
-  // Set default mode
+  // Set output power
+  lora_set_tx_power(lora, tx_power);
+  // Enter standby mode
   lora_mode_standby(lora);
 
   return LORA_OK;
+
+}
+
+
+uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
+    uint16_t nss_pin, uint64_t freq)
+{
+  return lora_init_ex(lora, spi, nss_port, nss_pin, freq, LORA_DEFAULT_SF,
+    LORA_BANDWIDTH_125_KHZ, LORA_DEFAULT_TX_POWER);
 }
 

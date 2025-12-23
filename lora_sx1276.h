@@ -16,7 +16,8 @@
 // Default settings
 #define LORA_DEFAULT_TX_POWER              17
 #define LORA_DEFAULT_SF                    7
-#define LORA_DEFAULT_PREAMBLE_LEN          10
+#define LORA_DEFAULT_PREAMBLE_LEN          8
+#define LORA_DEFAULT_CR                    LORA_CODING_RATE_4_5
 #define LORA_DEFAULT_RX_ADDR               0
 #define LORA_DEFAULT_TX_ADDR               0
 #define LORA_DEFAULT_SPI_TIMEOUT           1000 // ms
@@ -91,7 +92,23 @@ typedef struct {
 uint8_t  lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
                    uint16_t nss_pin, uint64_t freq);
 
-// Returns LoRa modem version number (usually 0x12)
+// Initialize LORA with parameters:
+// Params:
+//  - `lora` LoRa definition to be initialized
+//  - `spi` SPI HAL bus (`hspi1`, `hspi2`, etc)
+//  - `nss_port` - GPIO port where `NSS` pin connected to
+//  - `nss_pin` - GPIO pin number in `nss_port`
+//  - `freq` - operating frequency. In Hz
+//  - `sf` - spreading factor. Value from 6 to 12
+//  - `bw` - desired bandwidth, from LORA_BANDWIDTH_7_8 to LORA_BANDWIDTH_500_KHZ
+//  - `tx_power` - TX power in dBm. Valid range from 2dBm to 20dBm
+// Returns:
+//  - `LORA_OK` - modem initialized successfully
+//  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
+uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
+                   uint16_t nss_pin, uint64_t freq, uint8_t sf, uint64_t bw, uint8_t tx_power);
+
+                   // Returns LoRa modem version number (usually 0x12)
 uint8_t  lora_version(lora_sx1276 *lora);
 
 
@@ -123,7 +140,7 @@ void     lora_mode_receive_single(lora_sx1276 *lora);
 // Sets LoRa transmit power.
 // Params:
 //  - `level` - TX power in dBm. Valid range from 2dBm to 20dBm
-void     lora_set_tx_power(lora_sx1276 *lora, uint8_t level);
+void     lora_set_tx_power(lora_sx1276 *lora, uint8_t level_dbm);
 
 // Set operational frequency.
 // Params:
