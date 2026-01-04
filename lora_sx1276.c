@@ -679,7 +679,7 @@ void lora_clear_interrupt_rx_all(lora_sx1276 *lora)
 }
 
 uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-                   uint16_t nss_pin, uint64_t freq, uint8_t sf, uint64_t bw, uint8_t tx_power)
+                   uint16_t nss_pin, uint64_t freq, uint8_t sf, uint64_t bw, uint8_t tx_power, uint8_t tx_power_mode)
 {
   assert_param(lora && spi);
 
@@ -688,11 +688,7 @@ uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *n
   lora->nss_port = nss_port;
   lora->nss_pin = nss_pin;
   lora->frequency = freq;
-  if (tx_power <= 14) {
-    lora->pa_mode = LORA_PA_OUTPUT_RFO;
-  } else {
-    lora->pa_mode = LORA_PA_OUTPUT_PA_BOOST;
-  }
+  lora->pa_mode = tx_power_mode;
   lora->tx_base_addr = LORA_DEFAULT_TX_ADDR;
   lora->rx_base_addr = LORA_DEFAULT_RX_ADDR;
   lora->spi_timeout = LORA_DEFAULT_SPI_TIMEOUT;
@@ -705,8 +701,6 @@ uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *n
   }
 
   // Modem parameters (freq, mode, etc) must be done in SLEEP mode.
-  lora_mode_sleep(lora);
-  // Enable LoRa mode (since it can be switched on only in sleep)
   lora_mode_sleep(lora);
 
   // Set frequency
@@ -723,6 +717,8 @@ uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *n
   write_register(lora, REG_MODEM_CONFIG_3, 0x04);
   // Set output power
   lora_set_tx_power(lora, tx_power);
+  // Set signal bandwidth
+  lora_set_signal_bandwidth(lora, bw);
   // Enter standby mode
   lora_mode_standby(lora);
 
@@ -735,6 +731,6 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
     uint16_t nss_pin, uint64_t freq)
 {
   return lora_init_ex(lora, spi, nss_port, nss_pin, freq, LORA_DEFAULT_SF,
-    LORA_BANDWIDTH_125_KHZ, LORA_DEFAULT_TX_POWER);
+    LORA_BANDWIDTH_125_KHZ, LORA_DEFAULT_TX_POWER, LORA_PA_OUTPUT_PA_BOOST);
 }
 

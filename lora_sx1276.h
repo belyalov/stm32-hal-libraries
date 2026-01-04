@@ -102,11 +102,12 @@ uint8_t  lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_
 //  - `sf` - spreading factor. Value from 6 to 12
 //  - `bw` - desired bandwidth, from LORA_BANDWIDTH_7_8 to LORA_BANDWIDTH_500_KHZ
 //  - `tx_power` - TX power in dBm. Valid range from 2dBm to 20dBm
+//  - `tx_power_mode` - power amplifier mode. Either LORA_PA_OUTPUT_RFO or LORA_PA_OUTPUT_PA_BOOST
 // Returns:
 //  - `LORA_OK` - modem initialized successfully
 //  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
 uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-                   uint16_t nss_pin, uint64_t freq, uint8_t sf, uint64_t bw, uint8_t tx_power);
+                   uint16_t nss_pin, uint64_t freq, uint8_t sf, uint64_t bw, uint8_t tx_power, uint8_t tx_power_mode);
 
                    // Returns LoRa modem version number (usually 0x12)
 uint8_t  lora_version(lora_sx1276 *lora);
