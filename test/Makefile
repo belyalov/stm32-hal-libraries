@@ -16,6 +16,7 @@ SOURCES = \
 	$(SOURCE_DIR)/debug.c \
 	$(SOURCE_DIR)/static_alloc.c \
 	$(SOURCE_DIR)/si7021.c \
+	$(SOURCE_DIR)/sht4x.c \
 	$(SOURCE_DIR)/ring_buffer.c \
 	$(SOURCE_DIR)/ring_buffer_nanopb.c \
 	$(SOURCE_DIR)/veml6030.c
@@ -26,12 +27,14 @@ HEADERS = \
 	$(SOURCE_DIR)/ring_buffer_fixed_size.h \
 	$(SOURCE_DIR)/ring_buffer_nanopb.h \
 	$(SOURCE_DIR)/si7021.h \
+	$(SOURCE_DIR)/sht4x.h \
 	$(SOURCE_DIR)/htons.h
 
 TESTS = \
 	$(TEST_DIR)/test_mocks.cpp \
 	$(TEST_DIR)/test_debug.cpp \
 	$(TEST_DIR)/test_si7021.cpp \
+	$(TEST_DIR)/test_sht4x.cpp \
 	$(TEST_DIR)/test_static_alloc.cpp \
 	$(TEST_DIR)/test_ring.cpp \
 	$(TEST_DIR)/test_ring_fixed_size.cpp \
