@@ -43,16 +43,29 @@ TEST_F(sht4x, present)
 
 TEST_F(sht4x, measurement)
 {
-  // 0x6666 -> 25.00C, 0x8000 -> 56%
+  // 0x6666 -> 25.00C, 0x8000 -> 56.50% -> 57%
   I2C_queue_receive_data(string("\x66\x66\x93\x80\x00\xa2", 6));
 
   int32_t temp = 0;
   uint32_t hum = 0;
   ASSERT_TRUE(sht4x_one_shot_measurement(&i2c, SHT4X_ADDRESS_C, SHT4X_PRECISION_HIGH, &temp, &hum));
   ASSERT_EQ(2500, temp);
-  ASSERT_EQ(56, hum);
+  ASSERT_EQ(57, hum);
 
   ASSERT_EQ(I2C_get_transmit_history_entry(0), "\xfd");
+}
+
+TEST_F(sht4x, humidity_rounding)
+{
+  // 0x7BE4 -> 54.494% -> 54%, 0x7BE8 -> 54.502% -> 55% (truncating gave 54 for both)
+  I2C_queue_receive_data(string("\x66\x66\x93\x7b\xe4\xa5", 6));
+  I2C_queue_receive_data(string("\x66\x66\x93\x7b\xe8\xd8", 6));
+
+  uint32_t hum = 0;
+  ASSERT_TRUE(sht4x_one_shot_measurement(&i2c, SHT4X_ADDRESS_C, SHT4X_PRECISION_HIGH, NULL, &hum));
+  ASSERT_EQ(54, hum);
+  ASSERT_TRUE(sht4x_one_shot_measurement(&i2c, SHT4X_ADDRESS_C, SHT4X_PRECISION_HIGH, NULL, &hum));
+  ASSERT_EQ(55, hum);
 }
 
 TEST_F(sht4x, negative_temperature)

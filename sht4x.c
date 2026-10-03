@@ -30,7 +30,9 @@ static uint32_t convert_humidity(uint16_t raw)
 {
     // Formula: -6 + 125 * (raw / 0xffff)
     // NOTE: unlike SHT3x, result may fall outside of 0-100% and must be clipped
-    int32_t result = raw * 125;
+    // Rounded to the nearest percent: plain division truncated, which read
+    // 0.5% RH low on average at this 1% resolution.
+    int32_t result = raw * 125 + 0xFFFF / 2;
     result /= 0xFFFF;
     result -= 6;
 
