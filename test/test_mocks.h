@@ -5,6 +5,7 @@
 #define __TEST_MOCKS__H
 
 std::string SPI_get_transmit_history_entry(size_t index);
+size_t      SPI_get_transmit_history_size();
 void        SPI_queue_receive_data(const std::string& data);
 void        SPI_clear_transmit_history();
 void        SPI_clear_transmit_queue();

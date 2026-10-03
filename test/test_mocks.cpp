@@ -26,6 +26,11 @@ string SPI_get_transmit_history_entry(size_t index)
   return spi_transmit_history[index];
 }
 
+size_t SPI_get_transmit_history_size()
+{
+  return spi_transmit_history.size();
+}
+
 void SPI_queue_receive_data(const string& data)
 {
   spi_transmit_queue.push_back(data);

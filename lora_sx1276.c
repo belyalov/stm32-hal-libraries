@@ -27,8 +27,15 @@
 #define REG_PREAMBLE_LSB         0x21
 #define REG_PAYLOAD_LENGTH       0x22
 #define REG_MODEM_CONFIG_3       0x26
+// Named as in the errata note / Semtech driver. The datasheet register map
+// swaps the names (0x2f IfFreq2, 0x30 IfFreq1); values written follow the errata.
+#define REG_IF_FREQ_1            0x2f
+#define REG_IF_FREQ_2            0x30
 #define REG_DETECTION_OPTIMIZE   0x31
+#define REG_HIGH_BW_OPTIMIZE_1   0x36
 #define REG_DETECTION_THRESHOLD  0x37
+#define REG_HIGH_BW_OPTIMIZE_2   0x3a
+#define REG_IMAGE_CAL            0x3b  // FSK mode only (RegInvertIQ2 in LoRa mode)
 #define REG_DIO_MAPPING_1        0x40
 #define REG_VERSION              0x42
 #define REG_PA_DAC               0x4d
@@ -39,6 +46,7 @@
 #define OPMODE_TX                0x03
 #define OPMODE_RX_CONTINUOUS     0x05
 #define OPMODE_RX_SINGLE         0x06
+#define OPMODE_MASK              0x07
 #define OPMODE_LONG_RANGE_MODE   0x80  // (1 << 7)
 
 // Power Amplifier (PA_DAC) settings
@@ -50,11 +58,29 @@
 
 // Modem config register parameters
 #define MC1_IMPLICIT_HEADER_MODE    (1 << 0)
+#define MC1_CODING_RATE_MASK        0x0e
 
 #define MC2_CRC_ON                  (1 << 2)
+#define MC2_SYMB_TIMEOUT_MSB_MASK   0x03
 
 #define MC3_AGCAUTO                 (1 << 2)
-#define MC3_MOBILE_NODE             (1 << 3)
+#define MC3_LOW_DATA_RATE_OPTIMIZE  (1 << 3)
+
+// LoRa detection optimize register
+#define DETECTION_AUTOMATIC_IF_ON   (1 << 7)
+#define DETECTION_OPTIMIZE_MASK     0x07
+
+// Image calibration register (FSK mode)
+#define IMAGE_CAL_AUTO_ON           (1 << 7)
+#define IMAGE_CAL_START             (1 << 6)
+#define IMAGE_CAL_RUNNING           (1 << 5)
+#define IMAGE_CAL_TIMEOUT           20  // ms, calibration takes ~10ms
+
+// RSSI offsets for High / Low Frequency RF ports, datasheet section 5.5.5.
+// LF port serves bands up to 525 MHz, HF port the band from 779 / 862 MHz.
+#define RSSI_OFFSET_HF              -157
+#define RSSI_OFFSET_LF              -164
+#define LF_PORT_MAX_FREQUENCY       (525 * MHZ)
 
 // IRQs
 #define IRQ_FLAGS_RX_TIMEOUT        (1 << 7)
@@ -72,6 +98,26 @@
 
 #define TRANSFER_MODE_DMA           1
 #define TRANSFER_MODE_BLOCKING      2
+
+// Signal bandwidth as a divider of 500 kHz, indexed by LORA_BANDWIDTH_*
+static const uint8_t bandwidth_div[LORA_BW_LAST] = {64, 48, 32, 24, 16, 12, 8, 4, 2, 1};
+
+// Errata 2.3 "Receiver Spurious Reception of a LoRa Signal", for bandwidths below 500 kHz:
+// RegIfFreq1 value and receiver LO offset, since narrow bandwidths move the IF.
+static const struct {
+  uint8_t  if_freq;
+  uint16_t rx_offset;  // Hz
+} spurious_rx_fix[LORA_BANDWIDTH_500_KHZ] = {
+  {0x48, 7810},   // 7.8 kHz
+  {0x44, 10420},  // 10.4 kHz
+  {0x44, 15620},  // 15.6 kHz
+  {0x44, 20830},  // 20.8 kHz
+  {0x44, 31250},  // 31.25 kHz
+  {0x44, 41670},  // 41.7 kHz
+  {0x40, 0},      // 62.5 kHz
+  {0x40, 0},      // 125 kHz
+  {0x40, 0},      // 250 kHz
+};
 
 // Debugging support
 // To enable debug information add
@@ -178,6 +224,46 @@ static void set_mode(lora_sx1276 *lora, uint8_t mode)
   write_register(lora, REG_OP_MODE, OPMODE_LONG_RANGE_MODE | mode);
 }
 
+// Writes RF carrier frequency registers
+static void write_frequency(lora_sx1276 *lora, uint64_t freq)
+{
+  // From datasheet: FREQ = (FRF * 32 Mhz) / (2 ^ 19)
+  // FRF is 24-bit, round it to the nearest step (61.035 Hz)
+  uint32_t frf = (uint32_t)(((freq << 19) + 16 * MHZ) / (32 * MHZ)) & 0xFFFFFF;
+
+  write_register(lora, REG_FRF_MSB, (uint8_t)(frf >> 16));
+  write_register(lora, REG_FRF_MID, (uint8_t)(frf >> 8));
+  // New frequency is taken into account when LSB gets written
+  write_register(lora, REG_FRF_LSB, (uint8_t)frf);
+}
+
+// Image and RSSI calibration of the receiver (datasheet 2.1.3.8).
+// The automatic one done on POR covers only the LF port at 434 MHz,
+// so it has to be repeated at the operating frequency.
+// Works in FSK mode only: expects the radio in FSK SLEEP. Takes ~10ms.
+static uint8_t calibrate_rx_chain(lora_sx1276 *lora)
+{
+  // Calibration must be started in STDBY, let crystal oscillator start (250us typ)
+  write_register(lora, REG_OP_MODE, OPMODE_STDBY);
+  HAL_Delay(1);
+  // Cut the PA just in case, as Semtech's reference driver does.
+  // Output power is set back by lora_set_tx_power().
+  write_register(lora, REG_PA_CONFIG, 0x00);
+
+  // Also turn off the temperature triggered re-calibration: datasheet recommends
+  // so, since it may run in the middle of a packet.
+  uint8_t image_cal = read_register(lora, REG_IMAGE_CAL) & (uint8_t)~IMAGE_CAL_AUTO_ON;
+  write_register(lora, REG_IMAGE_CAL, image_cal | IMAGE_CAL_START);
+  for (uint32_t elapsed = 0; read_register(lora, REG_IMAGE_CAL) & IMAGE_CAL_RUNNING; elapsed++) {
+    if (elapsed >= IMAGE_CAL_TIMEOUT) {
+      return LORA_ERROR;
+    }
+    HAL_Delay(1);
+  }
+
+  return LORA_OK;
+}
+
 // Set Overload Current Protection
 static void set_OCP(lora_sx1276 *lora, uint8_t imax)
 {
@@ -206,24 +292,19 @@ static void set_low_data_rate_optimization(lora_sx1276 *lora)
   assert_param(lora);
 
   // Read current signal bandwidth / Spreading Factor
-  uint64_t bandwidth = (read_register(lora, REG_MODEM_CONFIG_1) >> 4) & 0x0F;
-  uint8_t  sf = (read_register(lora, REG_MODEM_CONFIG_2) >> 4) & 0x0F;
+  uint8_t bandwidth = (read_register(lora, REG_MODEM_CONFIG_1) >> 4) & 0x0F;
+  uint8_t sf = (read_register(lora, REG_MODEM_CONFIG_2) >> 4) & 0x0F;
 
   uint8_t mc3 = read_register(lora, REG_MODEM_CONFIG_3);
   mc3 |= MC3_AGCAUTO;
 
-  int8_t ldo =
-    (bandwidth == LORA_BANDWIDTH_125_KHZ && sf >= 11) ||
-    (bandwidth == LORA_BANDWIDTH_250_KHZ && sf >= 12);
-
-  if (ldo) {
-    mc3 |= MC3_MOBILE_NODE;
+  // LowDataRateOptimize is mandated when symbol duration exceeds 16ms (datasheet 4.1.1.6).
+  // Symbol duration is 2^SF / BW, where BW = 500 kHz / div, so the condition is:
+  //   2^SF * div / 500 kHz > 16ms  <=>  2^SF * div > 8000
+  if (bandwidth < LORA_BW_LAST && ((1UL << sf) * bandwidth_div[bandwidth]) > 8000) {
+    mc3 |= MC3_LOW_DATA_RATE_OPTIMIZE;
   } else {
-    mc3 &= (uint8_t)~MC3_MOBILE_NODE;
-  }
-
-  if (sf >= 11 && bandwidth == LORA_BANDWIDTH_125_KHZ) {
-    mc3 |= MC3_MOBILE_NODE;
+    mc3 &= (uint8_t)~MC3_LOW_DATA_RATE_OPTIMIZE;
   }
 
   write_register(lora, REG_MODEM_CONFIG_3, mc3);
@@ -236,28 +317,33 @@ void lora_mode_sleep(lora_sx1276 *lora)
   set_mode(lora, OPMODE_SLEEP);
 }
 
-void lora_mode_receive_continuous(lora_sx1276 *lora)
+// Prepares radio to receive packets and switches it into given receive mode
+static void set_receive_mode(lora_sx1276 *lora, uint8_t mode)
 {
-  assert_param(lora);
-
   // Update base FIFO address for incoming packets
   write_register(lora, REG_FIFO_RX_BASE_ADDR, lora->rx_base_addr);
   // Clear all RX related IRQs
   write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_RX_ALL);
+  // Errata 2.3: narrow bandwidths move receiver IF, so LO has to be moved too
+  if (lora->rx_frequency_offset) {
+    write_frequency(lora, lora->frequency + lora->rx_frequency_offset);
+  }
 
-  set_mode(lora, OPMODE_RX_CONTINUOUS);
+  set_mode(lora, mode);
+}
+
+void lora_mode_receive_continuous(lora_sx1276 *lora)
+{
+  assert_param(lora);
+
+  set_receive_mode(lora, OPMODE_RX_CONTINUOUS);
 }
 
 void lora_mode_receive_single(lora_sx1276 *lora)
 {
   assert_param(lora);
 
-  // Update base FIFO address for incoming packets
-  write_register(lora, REG_FIFO_RX_BASE_ADDR, lora->rx_base_addr);
-  // Clear all RX related IRQs
-  write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_RX_ALL);
-
-  set_mode(lora, OPMODE_RX_SINGLE);
+  set_receive_mode(lora, OPMODE_RX_SINGLE);
 }
 
 void lora_mode_standby(lora_sx1276 *lora)
@@ -333,32 +419,34 @@ void lora_set_frequency(lora_sx1276 *lora, uint64_t freq)
 {
   assert_param(lora);
 
-  // From datasheet: FREQ = (FRF * 32 Mhz) / (2 ^ 19)
-  uint64_t frf = (freq << 19) / (32 * MHZ);
-  // FRF is 24-bit
-  frf &= 0xFFFFFF;
-
-  write_register(lora, REG_FRF_MSB, (uint8_t)(frf >> 16));
-  write_register(lora, REG_FRF_MID, (uint8_t)(frf & 0xff00) >> 8);
-  write_register(lora, REG_FRF_LSB, (uint8_t)(frf & 0xff));
+  write_frequency(lora, freq);
+  lora->frequency = freq;
 }
 
-int8_t lora_packet_rssi(lora_sx1276 *lora)
+int16_t lora_packet_rssi(lora_sx1276 *lora)
 {
   assert_param(lora);
 
-  uint8_t rssi = read_register(lora, REG_PKT_RSSI_VALUE);
+  int16_t rssi = read_register(lora, REG_PKT_RSSI_VALUE);
+  int8_t  snr = lora_packet_snr(lora);
 
-  return lora->frequency < (868 * MHZ) ? rssi - 164 : rssi - 157;
+  rssi += lora->frequency > LF_PORT_MAX_FREQUENCY ? RSSI_OFFSET_HF : RSSI_OFFSET_LF;
+  // Packet below the noise floor: PacketRssi is noise there, signal is weaker by SNR
+  if (snr < 0) {
+    rssi += snr;
+  }
+
+  return rssi;
 }
 
-uint8_t lora_packet_snr(lora_sx1276 *lora)
+int8_t lora_packet_snr(lora_sx1276 *lora)
 {
   assert_param(lora);
 
-  uint8_t snr = read_register(lora, REG_PKT_SNR_VALUE);
+  // Two's complement value, in 0.25dB steps. Round to the nearest dB.
+  int8_t snr = (int8_t)read_register(lora, REG_PKT_SNR_VALUE);
 
-  return snr / 4;
+  return (snr + (snr < 0 ? -2 : 2)) / 4;
 }
 
 void lora_set_signal_bandwidth(lora_sx1276 *lora, uint64_t bw)
@@ -371,6 +459,29 @@ void lora_set_signal_bandwidth(lora_sx1276 *lora, uint64_t bw)
   // Signal bandwidth uses 4-7 bits of config
   mc1 = (mc1 & 0x0F) | bw << 4;
   write_register(lora, REG_MODEM_CONFIG_1, mc1);
+
+  // Receiver settings from the errata note
+  uint8_t detect = read_register(lora, REG_DETECTION_OPTIMIZE);
+  uint32_t rx_offset = 0;
+  if (bw >= LORA_BANDWIDTH_500_KHZ) {
+    // 2.1: Sensitivity optimization with a 500 kHz bandwidth
+    write_register(lora, REG_HIGH_BW_OPTIMIZE_1, 0x02);
+    write_register(lora, REG_HIGH_BW_OPTIMIZE_2, lora->frequency > LF_PORT_MAX_FREQUENCY ? 0x64 : 0x7f);
+    write_register(lora, REG_DETECTION_OPTIMIZE, detect | DETECTION_AUTOMATIC_IF_ON);
+  } else {
+    write_register(lora, REG_HIGH_BW_OPTIMIZE_1, 0x03);
+    // 2.3: Receiver spurious reception of a LoRa signal
+    write_register(lora, REG_DETECTION_OPTIMIZE, detect & (uint8_t)~DETECTION_AUTOMATIC_IF_ON);
+    write_register(lora, REG_IF_FREQ_1, spurious_rx_fix[bw].if_freq);
+    write_register(lora, REG_IF_FREQ_2, 0x00);
+    rx_offset = spurious_rx_fix[bw].rx_offset;
+  }
+  // Receiver LO offset changed: put LO back to the nominal frequency,
+  // receive mode applies the new offset
+  if (lora->rx_frequency_offset != rx_offset) {
+    lora->rx_frequency_offset = rx_offset;
+    write_frequency(lora, lora->frequency);
+  }
 
   set_low_data_rate_optimization(lora);
 }
@@ -385,11 +496,16 @@ void lora_set_spreading_factor(lora_sx1276 *lora, uint8_t sf)
     sf = 12;
   }
 
+  // DetectionOptimize uses bits 0-2. Keep AutomaticIFOn (bit 7),
+  // lora_set_signal_bandwidth() sets it as errata 2.3 requires.
+  uint8_t detect = read_register(lora, REG_DETECTION_OPTIMIZE) & (uint8_t)~DETECTION_OPTIMIZE_MASK;
   if (sf == 6) {
-    write_register(lora, REG_DETECTION_OPTIMIZE, 0xc5);
+    write_register(lora, REG_DETECTION_OPTIMIZE, detect | 0x05);
     write_register(lora, REG_DETECTION_THRESHOLD, 0x0c);
+    // SF6 is possible only in implicit header mode
+    lora_set_implicit_header_mode(lora);
   } else {
-    write_register(lora, REG_DETECTION_OPTIMIZE, 0xc3);
+    write_register(lora, REG_DETECTION_OPTIMIZE, detect | 0x03);
     write_register(lora, REG_DETECTION_THRESHOLD, 0x0a);
   }
   // Set new spread factor
@@ -418,21 +534,33 @@ void lora_set_crc(lora_sx1276 *lora, uint8_t enable)
 
 void lora_set_coding_rate(lora_sx1276 *lora, uint8_t rate)
 {
-  assert_param(lora);
+  assert_param(lora && rate >= LORA_CODING_RATE_4_5 && rate <= LORA_CODING_RATE_4_8);
+
+  rate &= MC1_CODING_RATE_MASK;
+  if (rate < LORA_CODING_RATE_4_5) {
+    rate = LORA_CODING_RATE_4_5;
+  } else if (rate > LORA_CODING_RATE_4_8) {
+    rate = LORA_CODING_RATE_4_8;
+  }
 
   uint8_t mc1 = read_register(lora, REG_MODEM_CONFIG_1);
 
-  // coding rate bits are 1-3 in modem config 1 register
-  mc1 |= rate << 1;
+  // coding rate bits are 1-3 in modem config 1 register, keep bandwidth / header mode
+  mc1 = (mc1 & (uint8_t)~MC1_CODING_RATE_MASK) | rate;
   write_register(lora, REG_MODEM_CONFIG_1, mc1);
 }
 
 void lora_set_preamble_length(lora_sx1276 *lora, uint16_t len)
 {
-  assert_param(lora);
+  assert_param(lora && len >= 6);
+
+  // Shortest preamble is 6 symbols (datasheet 4.1.1.6)
+  if (len < 6) {
+    len = 6;
+  }
 
   write_register(lora, REG_PREAMBLE_MSB, len >> 8);
-  write_register(lora, REG_PREAMBLE_LSB, len & 0xf);
+  write_register(lora, REG_PREAMBLE_LSB, len & 0xff);
 }
 
 uint8_t lora_version(lora_sx1276 *lora)
@@ -461,6 +589,10 @@ static uint8_t lora_send_packet_base(lora_sx1276 *lora, uint8_t *data, uint8_t d
 
   // Wakeup radio because of FIFO is only available in STANDBY mode
   set_mode(lora, OPMODE_STDBY);
+  // Transmit at the nominal frequency: receive mode may have moved LO (errata 2.3)
+  if (lora->rx_frequency_offset) {
+    write_frequency(lora, lora->frequency);
+  }
 
   // Clear TX IRQ flag, to be sure
   lora_clear_interrupt_tx_done(lora);
@@ -526,22 +658,21 @@ uint8_t lora_send_packet_blocking(lora_sx1276 *lora, uint8_t *data, uint8_t data
 
 void lora_set_rx_symbol_timeout(lora_sx1276 *lora, uint16_t symbols)
 {
-  assert_param(lora && symbols <= 1024 && symbols >= 4);
+  assert_param(lora && symbols <= 1023 && symbols >= 4);
 
+  // Timeout is 10-bit value
   if (symbols < 4) {
     symbols = 4;
   }
   if (symbols > 1023) {
-    symbols = 1024;
+    symbols = 1023;
   }
 
-  write_register(lora, REG_SYMB_TIMEOUT_LSB, symbols & 0xf);
-  if (symbols > 255) {
-    // MSB (2 first bits of config2)
-    uint8_t mc2 = read_register(lora, REG_MODEM_CONFIG_2);
-    mc2 |= symbols >> 8;
-    write_register(lora, REG_MODEM_CONFIG_2, mc2);
-  }
+  // MSB (2 first bits of config2), keep the rest of config2
+  uint8_t mc2 = read_register(lora, REG_MODEM_CONFIG_2);
+  mc2 = (mc2 & (uint8_t)~MC2_SYMB_TIMEOUT_MSB_MASK) | (symbols >> 8);
+  write_register(lora, REG_MODEM_CONFIG_2, mc2);
+  write_register(lora, REG_SYMB_TIMEOUT_LSB, symbols & 0xff);
 }
 
 uint8_t lora_is_packet_available(lora_sx1276 *lora)
@@ -577,9 +708,10 @@ static uint8_t lora_receive_packet_base(lora_sx1276 *lora, uint8_t *buffer, uint
   uint8_t res = LORA_EMPTY;
   uint8_t len = 0;
 
-  // Read/Reset IRQs
+  // Read/Reset IRQs. Reset only those that have been read: in continuous mode
+  // the next packet may be raising its flags already.
   uint8_t state = read_register(lora, REG_IRQ_FLAGS);
-  write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_RX_ALL);
+  write_register(lora, REG_IRQ_FLAGS, state & IRQ_FLAGS_RX_ALL);
 
   if (state & IRQ_FLAGS_RX_TIMEOUT) {
     DEBUGF("timeout");
@@ -587,12 +719,9 @@ static uint8_t lora_receive_packet_base(lora_sx1276 *lora, uint8_t *buffer, uint
     goto done;
   }
 
+  // RxDone comes only after a valid header, so ValidHeader is not checked:
+  // it may be already cleared together with the previous packet.
   if (state & IRQ_FLAGS_RX_DONE) {
-    if (!(state & IRQ_FLAGS_VALID_HEADER)) {
-      DEBUGF("invalid header");
-      res = LORA_INVALID_HEADER;
-      goto done;
-    }
     // Packet has been received
     if (state & IRQ_FLAGS_PAYLOAD_CRC_ERROR) {
       DEBUGF("CRC error");
@@ -601,6 +730,10 @@ static uint8_t lora_receive_packet_base(lora_sx1276 *lora, uint8_t *buffer, uint
     }
     // Query for current header mode - implicit / explicit
     len = lora_pending_packet_length(lora);
+    // Length comes from the air: never write beyond the buffer
+    if (len > buffer_len) {
+      len = buffer_len;
+    }
     // Set FIFO to beginning of the packet
     uint8_t offset = read_register(lora, REG_FIFO_RX_CURRENT_ADDR);
     write_register(lora, REG_FIFO_ADDR_PTR, offset);
@@ -688,6 +821,7 @@ uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *n
   lora->nss_port = nss_port;
   lora->nss_pin = nss_pin;
   lora->frequency = freq;
+  lora->rx_frequency_offset = 0;
   lora->pa_mode = tx_power_mode;
   lora->tx_base_addr = LORA_DEFAULT_TX_ADDR;
   lora->rx_base_addr = LORA_DEFAULT_RX_ADDR;
@@ -701,15 +835,34 @@ uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *n
   }
 
   // Modem parameters (freq, mode, etc) must be done in SLEEP mode.
-  lora_mode_sleep(lora);
+  // LongRangeMode (FSK / LoRa) can be changed only in SLEEP - a write in any
+  // other mode is ignored, so enter SLEEP first, then select FSK.
+  write_register(lora, REG_OP_MODE, OPMODE_SLEEP);
+  write_register(lora, REG_OP_MODE, OPMODE_SLEEP);
 
-  // Set frequency
+  // Set frequency (common for FSK / LoRa modes)
   lora_set_frequency(lora, freq);
+
+  // Receiver calibration works in FSK mode only
+  if (calibrate_rx_chain(lora) != LORA_OK) {
+    DEBUGF("Receiver calibration did not finish");
+    return LORA_ERROR;
+  }
+
+  // Switch to LoRa the same way: enter SLEEP, then select LoRa
+  lora_mode_sleep(lora);
+  lora_mode_sleep(lora);
+  uint8_t opmode = read_register(lora, REG_OP_MODE);
+  if ((opmode & (OPMODE_LONG_RANGE_MODE | OPMODE_MASK)) != (OPMODE_LONG_RANGE_MODE | OPMODE_SLEEP)) {
+    DEBUGF("Unable to enter LoRa mode, RegOpMode 0x%x", opmode);
+    return LORA_ERROR;
+  }
+
+  // Explicit header mode (SF6 switches it to implicit)
+  lora_set_explicit_header_mode(lora);
   lora_set_spreading_factor(lora, sf);
   lora_set_coding_rate(lora, LORA_DEFAULT_CR);
   lora_set_preamble_length(lora, LORA_DEFAULT_PREAMBLE_LEN);
-  // Explicit header mode
-  lora_set_explicit_header_mode(lora);
   // Set LNA boost
   uint8_t current_lna = read_register(lora, REG_LNA);
   write_register(lora, REG_LNA,  current_lna | 0x03);

@@ -33,6 +33,7 @@ HEADERS = \
 TESTS = \
 	$(TEST_DIR)/test_mocks.cpp \
 	$(TEST_DIR)/test_debug.cpp \
+	$(TEST_DIR)/test_lora_sx1276.cpp \
 	$(TEST_DIR)/test_si7021.cpp \
 	$(TEST_DIR)/test_sht4x.cpp \
 	$(TEST_DIR)/test_static_alloc.cpp \

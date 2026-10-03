@@ -68,9 +68,10 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
    - `nss_port` - GPIO port where `NSS` pin connected to
    - `nss_pin` - GPIO pin number in `nss_port`
    - `freq` - operating frequency. In Hz
+  Also calibrates the receiver at `freq` (image rejection / RSSI), which takes ~10ms.
   Returns:
    - `LORA_OK` - modem initialized successfully
-   - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
+   - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin, radio did not switch into LoRa mode or receiver calibration did not finish)
 
 
  * `uint8_t  lora_version(lora_sx1276 *lora)`
@@ -106,10 +107,12 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
    Set signal bandwidth.
    - `bw` - desired bandwidth, from `LORA_BANDWIDTH_7_8_KHZ` to `LORA_BANDWIDTH_500_KHZ`
    For more information refer to section 4.1 of datasheet.
+   Receiver errata settings depend on the frequency band, so call it after `lora_set_frequency()`.
 
  * `void lora_set_spreading_factor(lora_sx1276 *lora, uint8_t sf)`
    Set signal spreading factor.
    - `sf` - spreading factor. Value from 6 to 12
+   SF 6 works only with implicit header, so it switches header mode to implicit.
    For more information refer to section 4.1 of datasheet.
 
  * `void lora_set_coding_rate(lora_sx1276 *lora, uint8_t rate)`
@@ -123,7 +126,7 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
 
  * `void lora_set_preamble_length(lora_sx1276 *lora, uint16_t len)`
    Set length of packet preamble.
-   - `len` - length of packet preamble
+   - `len` - length of packet preamble. Valid from `6` to `65535` symbols
    For more information refer to section 4.1.1.6 of datasheet
 
  * `void lora_set_implicit_header_mode(lora_sx1276 *lora)`
@@ -147,11 +150,12 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
 
 ### Received packet information
 
- * `uint8_t lora_packet_rssi(lora_sx1276 *lora)`
-   Returns RSSI of last received packet
+ * `int16_t lora_packet_rssi(lora_sx1276 *lora)`
+   Returns signal strength of last received packet, in dBm.
+   For packets below the noise floor (negative SNR) SNR is taken into account.
 
- * `uint8_t lora_packet_snr(lora_sx1276 *lora)`
-   Returns SNR of last received packet
+ * `int8_t lora_packet_snr(lora_sx1276 *lora)`
+   Returns SNR of last received packet, in dB (may be negative)
 
 
 ### SEND packet routines
@@ -219,7 +223,6 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
     - `LORA_OK` - packet successfully received.
     - `LORA_EMPTY` - no packet received at the moment (check for packet by `lora_is_packet_available()` before).
     - `LORA_TIMEOUT` - timeout while receiving packet (only for single receive mode).
-    - `LORA_INVALID_HEADER` - packet with malformed header received.
     - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable this functionality explicitly, it is disabled by default.
 
  * `void  lora_receive_packet_dma_complete(lora_sx1276 *lora);`
@@ -239,10 +242,9 @@ Copy / add as submodule files under `Src` directory to your STM32 HAL project, t
     - `LORA_OK` - packet successfully received.
     - `LORA_EMPTY` - no packet received at the moment (check for packet by `lora_is_packet_available()` before).
     - `LORA_TIMEOUT` - timeout while receiving packet (only for single receive mode).
-    - `LORA_INVALID_HEADER` - packet with malformed header received.
     - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable this functionality explicitly, it is disabled by default.
 
  * `void lora_set_rx_symbol_timeout(lora_sx1276 *lora, uint16_t symbols)`
    Sets timeout for `lora_mode_receive_single()` in symbols.
-    - `symbols` - timeout value. Valid from `4` to `1024` symbols.
+    - `symbols` - timeout value. Valid from `4` to `1023` symbols.
    For more information refer to datasheet section 4.1.5

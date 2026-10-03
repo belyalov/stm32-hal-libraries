@@ -37,11 +37,11 @@
 #define LORA_PA_OUTPUT_RFO                 0
 #define LORA_PA_OUTPUT_PA_BOOST            1
 
-// Coding rate
-#define LORA_CODING_RATE_4_5               0x08
-#define LORA_CODING_RATE_4_6               0x10
-#define LORA_CODING_RATE_4_7               0x18
-#define LORA_CODING_RATE_4_8               0x20
+// Coding rate (as placed in RegModemConfig1, bits 1-3)
+#define LORA_CODING_RATE_4_5               0x02
+#define LORA_CODING_RATE_4_6               0x04
+#define LORA_CODING_RATE_4_7               0x06
+#define LORA_CODING_RATE_4_8               0x08
 
 // Signal bandwidth ("spread factor")
 enum {
@@ -66,6 +66,8 @@ typedef struct {
   uint32_t            spi_timeout;
   // Operating frequency, in Hz
   uint32_t            frequency;
+  // Receiver LO offset for bandwidths below 62.5 kHz (errata 2.3), in Hz
+  uint32_t            rx_frequency_offset;
   // Output PIN (module internal, not related to your design)
   // Can be one of PA_OUTPUT_PA_BOOST / PA_OUTPUT_RFO
   uint32_t            pa_mode;
@@ -103,9 +105,11 @@ uint8_t  lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_
 //  - `bw` - desired bandwidth, from LORA_BANDWIDTH_7_8 to LORA_BANDWIDTH_500_KHZ
 //  - `tx_power` - TX power in dBm. Valid range from 2dBm to 20dBm
 //  - `tx_power_mode` - power amplifier mode. Either LORA_PA_OUTPUT_RFO or LORA_PA_OUTPUT_PA_BOOST
+// Also calibrates the receiver at `freq` (image rejection / RSSI), which takes ~10ms.
 // Returns:
 //  - `LORA_OK` - modem initialized successfully
-//  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
+//  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin,
+//    radio did not switch into LoRa mode or receiver calibration did not finish)
 uint8_t  lora_init_ex(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
                    uint16_t nss_pin, uint64_t freq, uint8_t sf, uint64_t bw, uint8_t tx_power, uint8_t tx_power_mode);
 
@@ -152,11 +156,13 @@ void     lora_set_frequency(lora_sx1276 *lora, uint64_t freq);
 // Params:
 //  - `bw` - desired bandwidth, from LORA_BANDWIDTH_7_8_KHZ to LORA_BANDWIDTH_500_KHZ
 // For more information refer to section 4.1 of datasheet.
+// Receiver errata settings depend on the frequency band, so call it after `lora_set_frequency()`.
 void     lora_set_signal_bandwidth(lora_sx1276 *lora, uint64_t bw);
 
 // Set signal spreading factor.
 // Params:
 //  - `sf` - spreading factor. Value from 6 to 12
+// SF 6 works only with implicit header, so it switches header mode to implicit.
 // For more information refer to section 4.1 of datasheet.
 void     lora_set_spreading_factor(lora_sx1276 *lora, uint8_t sf);
 
@@ -172,7 +178,7 @@ void     lora_set_crc(lora_sx1276 *lora, uint8_t enable);
 
 // Set length of packet preamble.
 // Params:
-//  - `len` - length of packet preamble
+//  - `len` - length of packet preamble. Valid from `6` to `65535` symbols
 // For more information refer to section 4.1.1.6 of datasheet
 void     lora_set_preamble_length(lora_sx1276 *lora, uint16_t len);
 
@@ -187,11 +193,12 @@ void     lora_set_explicit_header_mode(lora_sx1276 *lora);
 
 // Received packet information //
 
-// Returns RSSI of last received packet
-int8_t  lora_packet_rssi(lora_sx1276 *lora);
+// Returns signal strength of last received packet, in dBm.
+// For packets below the noise floor (negative SNR) SNR is taken into account.
+int16_t  lora_packet_rssi(lora_sx1276 *lora);
 
-// Returns SNR of last received packet
-uint8_t  lora_packet_snr(lora_sx1276 *lora);
+// Returns SNR of last received packet, in dB (may be negative)
+int8_t   lora_packet_snr(lora_sx1276 *lora);
 
 
 // SEND packet routines //
@@ -257,7 +264,6 @@ uint8_t  lora_pending_packet_length(lora_sx1276 *lora);
 //  - `LORA_OK` - packet successfully received.
 //  - `LORA_EMPTY` - no packet received at the moment (check for packet by `lora_is_packet_available()` before).
 //  - `LORA_TIMEOUT` - timeout while receiving packet (only for single receive mode).
-//  - `LORA_INVALID_HEADER` - packet with malformed header received.
 //  - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable
 //    this functionality explicitly, it is disabled by default.
 uint8_t  lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len, uint8_t *error);
@@ -278,7 +284,6 @@ uint8_t  lora_receive_packet(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_
 //  - `LORA_OK` - packet successfully received.
 //  - `LORA_EMPTY` - no packet received at the moment (check for packet by `lora_is_packet_available()` before).
 //  - `LORA_TIMEOUT` - timeout while receiving packet (only for single receive mode).
-//  - `LORA_INVALID_HEADER` - packet with malformed header received.
 //  - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable
 //    this functionality explicitly, it is disabled by default.
 uint8_t  lora_receive_packet_dma_start(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
@@ -304,7 +309,6 @@ void     lora_receive_packet_dma_complete(lora_sx1276 *lora);
 //  - `LORA_OK` - packet successfully received.
 //  - `LORA_EMPTY` - no packet received at the moment (check for packet by `lora_is_packet_available()` before).
 //  - `LORA_TIMEOUT` - timeout while receiving packet (only for single receive mode).
-//  - `LORA_INVALID_HEADER` - packet with malformed header received.
 //  - `LORA_CRC_ERROR` - malformed packet received (CRC failed). Please note that you need to enable
 //    this functionality explicitly, it is disabled by default.
 uint8_t  lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_t buffer_len,
@@ -312,7 +316,7 @@ uint8_t  lora_receive_packet_blocking(lora_sx1276 *lora, uint8_t *buffer, uint8_
 
 // Sets timeout for `lora_mode_receive_single()` in symbols.
 // Params:
-//  - `symbols` - timeout value. Valid from `4` to `1024` symbols.
+//  - `symbols` - timeout value. Valid from `4` to `1023` symbols.
 // For more information refer to datasheet section 4.1.5
 void     lora_set_rx_symbol_timeout(lora_sx1276 *lora, uint16_t symbols);
 
